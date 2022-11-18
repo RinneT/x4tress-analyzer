@@ -1,0 +1,10 @@
+# Logs 
+**/*.log
+
+# Compiled bin / classes
+target/**
+
+# Eclipse settings
+.settings/
+.project
+.classpath

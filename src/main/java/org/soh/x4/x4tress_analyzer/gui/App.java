@@ -7,8 +7,8 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.soh.x4.x4tress_analyzer.model.Component;
 import org.soh.x4.x4tress_analyzer.savegame.SaveGameLoader;
-import org.soh.x4.x4tress_analyzer.savegame.sax.Component;
 import org.soh.x4.x4tress_analyzer.savegame.sax.Savegame;
 import org.xml.sax.SAXException;
 
