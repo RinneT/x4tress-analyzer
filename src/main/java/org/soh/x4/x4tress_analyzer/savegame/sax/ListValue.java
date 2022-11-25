@@ -57,6 +57,7 @@ public class ListValue {
 	 * <li><i>"list"</i></li>
 	 * <li><i>"xmlkeyword"</i></li>
 	 * <li><i>"time"</i></li>
+	 * <li><i>"length"</i></li>
 	 * </ul>
 	 * <br>
 	 * Check
@@ -71,7 +72,7 @@ public class ListValue {
 	 * E.g. in the case of <i>"string"</i> or <i>"list"</i>, it is a reference to
 	 * the string map or other list values.<br>
 	 * In this case, parse this as an Integer. In the case of <i>"xmlkeyword"</i>,
-	 * it is a standalone String. In the case of <i>"time"</i>, parse it as a
+	 * it is a standalone String. In the case of <i>"time"</i> or <i>"length"</i>, parse it as a
 	 * float/double.
 	 */
 	private Object value;

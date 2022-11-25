@@ -68,7 +68,7 @@ public class Savegame {
 	 * In the X4 Savegame structure, all "String" values in a list are actually
 	 * references to the stringMap.<br>
 	 * Only a few String values are directly saved within the list. E.g.
-	 * <i>"xmlkeyword"</i>.<br>
+	 * <i>"xmlkeyword"</i> (Reserved words in X4).<br>
 	 * The key is an Integer ID.
 	 */
 	public HashMap<Integer, String> stringMap = new HashMap<>();
@@ -150,7 +150,7 @@ public class Savegame {
 	public GlobalEvent globalEventFromListEntry(List<ListValue> list) throws IndexOutOfBoundsException {
 		GlobalEvent event = new GlobalEvent();
 		event.setTimestamp(list.get(IDX_TIMESTAMP).getValueAsTimestamp());
-		event.setEventType(list.get(IDX_EVENT_TYPE).getValueAsString());
+		event.setEventType(getReferenceValue(IDX_EVENT_TYPE, list));
 		event.setAttackerId(getReferenceValue(IDX_ATTACKER_ID, list));
 		event.setAttacker(getReferenceValue(IDX_ATTACKER, list));
 		event.setAttackerFaction(getReferenceValue(IDX_ATTACKER_FACTION, list));
