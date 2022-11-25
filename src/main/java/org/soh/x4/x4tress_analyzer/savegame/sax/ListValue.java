@@ -19,6 +19,16 @@ public class ListValue {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ListValue.class);
 
 	private static final String TYPE_TIME = "time";
+	
+	private static final String TYPE_STRING = "xmlkeyword";
+	
+	/**
+	 * As pure strings and lists are saved as references,
+	 * the value type "string" and "list" are actually Integers
+	 */
+	private static final String[] TYPE_INTEGER = {"string" , "list"};
+	
+	private static final String[] TYPE_DOUBLE = {"length"};
 
 	/**
 	 * Define the starting time of X4 in Milliseconds<br>
@@ -83,7 +93,7 @@ public class ListValue {
 	}
 
 	/**
-	 * Return the List value as a timestamp.<br>
+	 * Return the list value as a timestamp.<br>
 	 * In X4, time starts at 825-02-08 : 11:00 (YYY-MM-DD : HH:MM)<br>
 	 * The <i>time</i> value in the savegame is the time passed in game in seconds, with milliseconds after the decimal point.<br>
 	 * Time in X4 passes the same as on earth (1sec = 100ms, 1min = 60sec, 1h = 60min, 1d = 24h)
@@ -96,6 +106,48 @@ public class ListValue {
 			Timestamp gameTime = new Timestamp(X4_STARTING_TIME + timeAsLong);
 			LOGGER.debug("Created timestamp: " + gameTime);
 			return gameTime;
+		}
+		return null;
+	}
+	
+	/**
+	 * Returns the list value as a String.
+	 * @return The String value
+	 */
+	public String getValueAsString() {
+		if (TYPE_STRING.equalsIgnoreCase(type) && value != null && value instanceof String) {
+			String valueAsString = (String) value;
+			return valueAsString;
+		}
+		return null;
+	}
+	
+	/**
+	 * Returns the list value as Integer.<br>
+	 * Note that references (e.g. strings or lists) are also stored as Integers!
+	 * @return The Integer value
+	 */
+	public Integer getValueAsInteger() {
+		for (String type : TYPE_INTEGER) {
+			if (type.equalsIgnoreCase(type) && value != null && value instanceof Integer) {
+				Integer valueAsInt = (Integer) value;
+				return valueAsInt;
+			}			
+		}
+		return null;
+	}
+	
+	/**
+	 * Returns the list value as Integer.<br>
+	 * Note that references (e.g. strings or lists) are also stored as Integers!
+	 * @return The Integer value
+	 */
+	public Double getValueAsDouble() {
+		for (String type : TYPE_DOUBLE) {
+			if (type.equalsIgnoreCase(type) && value != null && value instanceof Double) {
+				Double valueAsDouble = (Double) value;
+				return valueAsDouble;
+			}			
 		}
 		return null;
 	}

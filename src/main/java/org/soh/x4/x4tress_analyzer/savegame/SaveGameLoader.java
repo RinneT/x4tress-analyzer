@@ -12,7 +12,7 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.soh.x4.x4tress_analyzer.savegame.sax.Savegame;
+import org.soh.x4.x4tress_analyzer.model.DataStorage;
 import org.xml.sax.SAXException;
 
 /**
@@ -24,7 +24,7 @@ public class SaveGameLoader {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(SaveGameLoader.class);
 
-	public Savegame loadFile(File file) throws ParserConfigurationException, SAXException, IOException {
+	public DataStorage loadFile(File file) throws ParserConfigurationException, SAXException, IOException {
 		FileInputStream originalInputStream = new FileInputStream(file);
 		InputStream inputStream = originalInputStream;
 		LOGGER.info("Loading file: " + file.getAbsolutePath());
@@ -39,7 +39,7 @@ public class SaveGameLoader {
 		
 		saveGameParser.parse(inputStream, saveGameHandler);
 		
-		Savegame result = saveGameHandler.getComponents();
+		DataStorage result = saveGameHandler.getData();
 		System.out.println("Successfully parsed file " + file.getAbsolutePath());
 		
 		originalInputStream.close();

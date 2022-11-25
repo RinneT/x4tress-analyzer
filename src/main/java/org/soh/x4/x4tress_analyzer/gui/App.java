@@ -8,8 +8,9 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.soh.x4.x4tress_analyzer.model.Component;
+import org.soh.x4.x4tress_analyzer.model.DataStorage;
+import org.soh.x4.x4tress_analyzer.model.GlobalEvent;
 import org.soh.x4.x4tress_analyzer.savegame.SaveGameLoader;
-import org.soh.x4.x4tress_analyzer.savegame.sax.Savegame;
 import org.xml.sax.SAXException;
 
 import javafx.application.Application;
@@ -38,7 +39,7 @@ import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
 
 /**
- * JavaFX App
+ * JavaFX App / UI to simulate x4tress
  * 
  * @author Son of Hubert
  */
@@ -48,6 +49,8 @@ public class App extends Application {
 
 	private static boolean showGridLines = false;
 	private TableView<Component> objectList = null;
+	private TableView<GlobalEvent> globalEventList = null;
+	private TableView<GlobalEvent> globalEventFilteredList = null;
 	private TextField objectFilter = null;
 	private MenuBar menuBar = null;
 
@@ -72,16 +75,25 @@ public class App extends Application {
 
 		// Create the layout and components
 		// Create the parent grid
-		GridPane grid = createGridPane();
+		GridPane gridLeft = createGridPane();
 
 		// Create the Object List and its filter
-		grid = createObjectList(grid);
+		gridLeft = createObjectList(gridLeft);
+		
+		GridPane gridCenter = createGridPane();
+		gridCenter = createGlobalEventsFilteredList(gridCenter);
+		
+		GridPane gridBottom = createGridPane();
+		gridBottom = createGlobalEventsList(gridBottom);
 
 		// Create and show the parent scene
 		BorderPane rootBox = new BorderPane();
 		rootBox.setTop(createMenuBar(fileChooser, stage));
-		rootBox.setCenter(grid);
-		var scene = new Scene(rootBox, 640, 480);
+		rootBox.setLeft(gridLeft);
+		rootBox.setCenter(gridCenter);
+		// rootBox.setRight(null); TODO: The right side will receive the processed events and the Display text for the unit
+		rootBox.setBottom(gridBottom);
+		var scene = new Scene(rootBox);
 		stage.setTitle("SoH X4Tress Analyzer");
 		stage.setScene(scene);
 		stage.show();
@@ -170,6 +182,36 @@ public class App extends Application {
 
 		return grid;
 	}
+	
+	/**
+	 * Create the unfiltered Global Events List and its Filter
+	 * 
+	 * @param grid
+	 * @return The Grid Pane containing the Global Events List and Filter
+	 */
+	private GridPane createGlobalEventsFilteredList(GridPane grid) {
+		// Add the Global Events List
+		globalEventFilteredList = GlobalEvent.createUITable();
+
+		grid.add(globalEventFilteredList, 0, 0);
+
+		return grid;
+	}
+	
+	/**
+	 * Create the unfiltered Global Events List without Filter
+	 * 
+	 * @param grid
+	 * @return The Grid Pane containing the full Global Events List
+	 */
+	private GridPane createGlobalEventsList(GridPane grid) {
+		// Add the Global Events List
+		globalEventList = GlobalEvent.createUITable();
+
+		grid.add(globalEventList, 0, 0);
+
+		return grid;
+	}
 
 	/**
 	 * Load an X4 savegame file and populate the UI objects
@@ -183,7 +225,15 @@ public class App extends Application {
 			LOGGER.error(errorMessage);
 		}
 		try {
-			Savegame saveGameData = saveGameLoader.loadFile(file);
+			DataStorage saveGameData = saveGameLoader.loadFile(file);
+			if (saveGameData == null) {
+				errorMessage = "No data loaded!";
+				showError(errorMessage, null);
+				LOGGER.error(errorMessage);
+				return;
+			}
+			
+			// Populate the X4Objects list
 			ObservableList<Component> x4Objects = FXCollections.observableArrayList();
 			for (Component comp : saveGameData.getObjectList()) {
 				x4Objects.add(comp);
@@ -200,6 +250,27 @@ public class App extends Application {
 					filteredX4Objects.setPredicate(s -> s.contains(filter));
 				}
 			});
+			
+			// Populate the unfiltered Global Events list
+			ObservableList<GlobalEvent> sohGlobalEvents = FXCollections.observableArrayList();
+			for (GlobalEvent event : saveGameData.getGlobalEvents()) {
+				sohGlobalEvents.add(event);
+			}
+			
+			globalEventList.setItems(sohGlobalEvents);
+			
+			// Populate the filtered Global Events list
+			FilteredList<GlobalEvent> filteredGlobalEvents = new FilteredList<>(sohGlobalEvents, s -> true);
+			globalEventFilteredList.setItems(filteredGlobalEvents);
+			
+			objectList.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+			    if (newSelection != null) {
+			    	String objectCode = newSelection.getObjectCode();
+			    	filteredGlobalEvents.setPredicate(s -> s.matchesUnit(objectCode));;
+			    }
+			});
+			
+			
 
 		} catch (ParserConfigurationException e) {
 			errorMessage = "Error trying to initialize xml parser!";

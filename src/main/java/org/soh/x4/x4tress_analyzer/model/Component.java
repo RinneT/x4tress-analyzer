@@ -50,15 +50,18 @@ public class Component {
 	 * @param str the search string
 	 * @return true if any of the attributes contain the search string. False otherwise.
 	 */
-	public boolean contains(String str) {
-		if (objectClass != null && objectClass.contains(str)) {
-			return true;
-		}
-		if (objectCode != null && objectCode.contains(str)) {
-			return true;
-		}
-		if (objectOwner != null && objectOwner.contains(str)) {
-			return true;
+	public boolean contains(final String str) {
+		if (str != null) {
+			String strUpper = str.toUpperCase();
+			if (objectClass != null && objectClass.toUpperCase().contains(strUpper)) {
+				return true;
+			}
+			if (objectCode != null && objectCode.toUpperCase().contains(strUpper)) {
+				return true;
+			}
+			if (objectOwner != null && objectOwner.toUpperCase().contains(strUpper)) {
+				return true;
+			}
 		}
 		return false;
 	}

@@ -1,16 +1,25 @@
 package org.soh.x4.x4tress_analyzer.savegame;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.soh.x4.x4tress_analyzer.model.DataStorage;
+import org.soh.x4.x4tress_analyzer.model.GlobalEvent;
 import org.soh.x4.x4tress_analyzer.savegame.sax.ListValue;
 import org.soh.x4.x4tress_analyzer.savegame.sax.Savegame;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+/**
+ * Handler to load data from a X4 savegame
+ * 
+ * @author Son of Hubert
+ *
+ */
 public class SaveGameHandler extends DefaultHandler {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(SaveGameHandler.class);
@@ -25,7 +34,7 @@ public class SaveGameHandler extends DefaultHandler {
 
 	private static final String TAG_REF = "ref";
 
-	private static final String GLOBAL_EVENTS = "$GlobalEvents";
+	private static final String GLOBAL_EVENTS = "$SoHGlobalEvents";
 
 	private StringBuilder elementValue = null;
 	private Savegame savegame = null;
@@ -90,17 +99,57 @@ public class SaveGameHandler extends DefaultHandler {
 			break;
 		}
 	}
-
-	public Savegame getComponents() {
+	
+	/**
+	 * Convert the {@link org.soh.x4.x4tress_analyzer.savegame.sax.Savegame Savegame} object used during savegame parsing<br>
+	 * into a {@link org.soh.x4.x4tress_analyzer.model.DataStorage DataStorage} object used for processing.
+	 * @return the DataStorage object.
+	 * @throws NullPointerException if the savegame was not successfully loaded
+	 */
+	public DataStorage getData() throws NullPointerException {
+		DataStorage ds = null;
 		if (savegame != null) {
 			LOGGER.info("Checked " + componentsChecked + " components.");
 			LOGGER.info("Loaded " + savegame.getObjectList().size() + " components of type Station or Ship.");
+			
+			ArrayList<GlobalEvent> globalEvents = new ArrayList<>();
+			
+			/**
+			 * Steps:
+			 * 1. Get the Global Events list. This only contains references to other list entries
+			 * 2. For each entry, get the referenced ID and convert that to a Global Event
+			 */
+			HashMap<Integer, List<ListValue>> listMap = savegame.getListMap();
+			List<ListValue> eventReference = listMap.get(savegame.getGlobalEventsListId());
+			
+			for (ListValue event : eventReference) {
+				if ("list".equals(event.getType()) && event.getValue() != null) {
+					try {
+						List<ListValue> eventAsList = listMap.get(event.getValueAsInteger());
+						GlobalEvent globalEventFromListEntry = savegame.globalEventFromListEntry(eventAsList);
+						globalEvents.add(globalEventFromListEntry);																
+					} catch (IndexOutOfBoundsException e) {
+						LOGGER.error("Failed to create Global Event entry for Event reference Id '" + event.getValue() + "'!", e.getMessage());
+					}
+				} else {
+					LOGGER.warn("Found a non-reference entry in the GlobalEvents reference table!");
+				}
+			}
+			
+			ds = new DataStorage(savegame.getObjectList(), globalEvents);
+			
 		} else {
 			LOGGER.warn("Tried loading the components list before a file was parsed!");
+			throw new NullPointerException("Tried loading the components list before a file was parsed!");
 		}
-		return savegame;
+		return ds;
 	}
-
+	
+	
+	/**
+	 * Read the required data from an xml tag
+	 * @param attr The tag attributes
+	 */
 	private void handleTagRef(Attributes attr) {
 		if (currentRefsType != null) {
 			String strValue = null;
@@ -137,6 +186,7 @@ public class SaveGameHandler extends DefaultHandler {
 		if (valueType != null) {
 			Integer value = null;
 			Double timeValue = null;
+			Double lengthValue = null;
 			String strValue = null;
 			switch (valueType) {
 			case "list":
@@ -185,6 +235,19 @@ public class SaveGameHandler extends DefaultHandler {
 						entry.add(new ListValue(valueType, strValue));
 					}
 				}
+				break;
+			case "length":
+				// xmlkeyword is an actual string, not referencing any value
+				strValue = attr.getValue("value");
+				if (strValue != null) {
+					lengthValue = Double.valueOf(strValue);
+						if (currentListId != null && lengthValue != null) {
+							List<ListValue> entry = savegame.listMap.get(currentListId);
+							if (entry != null) {
+								entry.add(new ListValue(valueType, lengthValue));
+							}
+						}
+					}
 				break;
 			}
 		}
