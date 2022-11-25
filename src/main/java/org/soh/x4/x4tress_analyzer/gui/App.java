@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.soh.x4.x4tress_analyzer.model.Component;
 import org.soh.x4.x4tress_analyzer.model.DataStorage;
 import org.soh.x4.x4tress_analyzer.model.GlobalEvent;
+import org.soh.x4.x4tress_analyzer.model.ProcessedEvent;
 import org.soh.x4.x4tress_analyzer.savegame.SaveGameLoader;
 import org.xml.sax.SAXException;
 
@@ -51,6 +52,7 @@ public class App extends Application {
 	private TableView<Component> objectList = null;
 	private TableView<GlobalEvent> globalEventList = null;
 	private TableView<GlobalEvent> globalEventFilteredList = null;
+	private TableView<ProcessedEvent> processedEventList = null;
 	private TextField objectFilter = null;
 	private MenuBar menuBar = null;
 
@@ -79,19 +81,22 @@ public class App extends Application {
 
 		// Create the Object List and its filter
 		gridLeft = createObjectList(gridLeft);
-		
+
 		GridPane gridCenter = createGridPane();
 		gridCenter = createGlobalEventsFilteredList(gridCenter);
-		
+
 		GridPane gridBottom = createGridPane();
 		gridBottom = createGlobalEventsList(gridBottom);
+
+		GridPane gridRight = createGridPane();
+		gridRight = createProcessedEventsList(gridRight);
 
 		// Create and show the parent scene
 		BorderPane rootBox = new BorderPane();
 		rootBox.setTop(createMenuBar(fileChooser, stage));
 		rootBox.setLeft(gridLeft);
 		rootBox.setCenter(gridCenter);
-		// rootBox.setRight(null); TODO: The right side will receive the processed events and the Display text for the unit
+		rootBox.setRight(gridRight);
 		rootBox.setBottom(gridBottom);
 		var scene = new Scene(rootBox);
 		stage.setTitle("SoH X4Tress Analyzer");
@@ -164,14 +169,14 @@ public class App extends Application {
 	private GridPane createObjectList(GridPane grid) {
 		// Add the Object List
 		objectList = new TableView<>();
-        TableColumn<Component, String> objClassCol = new TableColumn<>("Class");
-        objClassCol.setCellValueFactory(new PropertyValueFactory<Component, String>("objectClass"));
-        TableColumn<Component, String>  objCodeCol = new TableColumn<>("Code");
-        objCodeCol.setCellValueFactory(new PropertyValueFactory<Component, String>("objectCode"));
-        TableColumn<Component, String>  objOwnerCol = new TableColumn<>("Owner");
-        objOwnerCol.setCellValueFactory(new PropertyValueFactory<Component, String>("objectOwner"));
-        
-        objectList.getColumns().addAll(objClassCol, objCodeCol, objOwnerCol);
+		TableColumn<Component, String> objClassCol = new TableColumn<>("Class");
+		objClassCol.setCellValueFactory(new PropertyValueFactory<Component, String>("objectClass"));
+		TableColumn<Component, String> objCodeCol = new TableColumn<>("Code");
+		objCodeCol.setCellValueFactory(new PropertyValueFactory<Component, String>("objectCode"));
+		TableColumn<Component, String> objOwnerCol = new TableColumn<>("Owner");
+		objOwnerCol.setCellValueFactory(new PropertyValueFactory<Component, String>("objectOwner"));
+
+		objectList.getColumns().addAll(objClassCol, objCodeCol, objOwnerCol);
 
 		// Add the Filter text field for Objects
 		objectFilter = new TextField();
@@ -182,7 +187,7 @@ public class App extends Application {
 
 		return grid;
 	}
-	
+
 	/**
 	 * Create the unfiltered Global Events List and its Filter
 	 * 
@@ -197,9 +202,9 @@ public class App extends Application {
 
 		return grid;
 	}
-	
+
 	/**
-	 * Create the unfiltered Global Events List without Filter
+	 * Create the Global Events List without Filter
 	 * 
 	 * @param grid
 	 * @return The Grid Pane containing the full Global Events List
@@ -214,7 +219,23 @@ public class App extends Application {
 	}
 
 	/**
+	 * Create the Processed Events List without Filter
+	 * 
+	 * @param grid
+	 * @return The Grid Pane containing the full Processed Events List
+	 */
+	private GridPane createProcessedEventsList(GridPane grid) {
+		// Add the Global Events List
+		processedEventList = ProcessedEvent.createUITable();
+
+		grid.add(processedEventList, 0, 0);
+
+		return grid;
+	}
+
+	/**
 	 * Load an X4 savegame file and populate the UI objects
+	 * 
 	 * @param file
 	 */
 	private void loadSaveGame(File file) {
@@ -232,7 +253,7 @@ public class App extends Application {
 				LOGGER.error(errorMessage);
 				return;
 			}
-			
+
 			// Populate the X4Objects list
 			ObservableList<Component> x4Objects = FXCollections.observableArrayList();
 			for (Component comp : saveGameData.getObjectList()) {
@@ -250,47 +271,56 @@ public class App extends Application {
 					filteredX4Objects.setPredicate(s -> s.contains(filter));
 				}
 			});
-			
+
 			// Populate the unfiltered Global Events list
 			ObservableList<GlobalEvent> sohGlobalEvents = FXCollections.observableArrayList();
 			for (GlobalEvent event : saveGameData.getGlobalEvents()) {
 				sohGlobalEvents.add(event);
 			}
-			
+
 			globalEventList.setItems(sohGlobalEvents);
-			
+
 			// Populate the filtered Global Events list
 			FilteredList<GlobalEvent> filteredGlobalEvents = new FilteredList<>(sohGlobalEvents, s -> true);
 			globalEventFilteredList.setItems(filteredGlobalEvents);
+
+
+			// Populate the Processed Events list
+			ObservableList<ProcessedEvent> sohProcessedEvents = FXCollections.observableArrayList();
+			for (ProcessedEvent event : saveGameData.getProcessedEvents()) {
+				sohProcessedEvents.add(event);
+			}
+			FilteredList<ProcessedEvent> filteredProcessedEvents = new FilteredList<>(sohProcessedEvents, s -> true);
+			processedEventList.setItems(filteredProcessedEvents);
 			
 			objectList.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
-			    if (newSelection != null) {
-			    	String objectCode = newSelection.getObjectCode();
-			    	filteredGlobalEvents.setPredicate(s -> s.matchesUnit(objectCode));;
-			    }
+				if (newSelection != null) {
+					String objectCode = newSelection.getObjectCode();
+					filteredGlobalEvents.setPredicate(s -> s.matchesUnit(objectCode));
+					filteredProcessedEvents.setPredicate(s -> s.matchesUnit(objectCode));
+				}
 			});
-			
-			
 
 		} catch (ParserConfigurationException e) {
 			errorMessage = "Error trying to initialize xml parser!";
 			showError(errorMessage, e);
-			LOGGER.error(errorMessage,e);
+			LOGGER.error(errorMessage, e);
 		} catch (SAXException e) {
 			errorMessage = "Error trying to parse savegame " + file.getAbsolutePath() + "! Is it a valid X4 savegame?";
 			showError(errorMessage, e);
-			LOGGER.error(errorMessage,e);
+			LOGGER.error(errorMessage, e);
 		} catch (IOException e) {
 			errorMessage = "Error trying to open file " + file.getAbsolutePath() + "! Is it a valid X4 savegame?";
 			showError(errorMessage, e);
-			LOGGER.error(errorMessage,e);
+			LOGGER.error(errorMessage, e);
 		}
 	}
-	
+
 	/**
 	 * Display an error message popup
+	 * 
 	 * @param errorMessage the error message
-	 * @param e the exception. Can be null!
+	 * @param e            the exception. Can be null!
 	 */
 	private void showError(String errorMessage, Exception e) {
 		if (e != null) {

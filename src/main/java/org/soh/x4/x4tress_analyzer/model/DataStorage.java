@@ -1,6 +1,5 @@
 package org.soh.x4.x4tress_analyzer.model;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -16,9 +15,11 @@ public class DataStorage {
 		this.globalEvents = globalEvents;
 	}
 
-	private List<Component> objectList = new ArrayList<>();
+	private final List<Component> objectList;
 	
-	private List<GlobalEvent> globalEvents = new ArrayList<>();
+	private final List<GlobalEvent> globalEvents;
+	
+	private List<ProcessedEvent> processedEvents;
 	
 	/**
 	 * Get the list of loaded Objects (Ships / Stations)
@@ -35,5 +36,19 @@ public class DataStorage {
 	public List<GlobalEvent> getGlobalEvents() {
 		return globalEvents;
 	}
+	
+	/**
+	 * Get the list of processed SoH x4tress Events
+	 * @return the Processed Events list
+	 */
+	public List<ProcessedEvent> getProcessedEvents() {
+		return processedEvents;
+	}
+
+	public void setProcessedEvents(List<ProcessedEvent> processedEvents) {
+		this.processedEvents = processedEvents;
+	}
+	
+	
 
 }
