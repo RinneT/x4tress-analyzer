@@ -136,6 +136,8 @@ public class SaveGameHandler extends DefaultHandler {
 				}
 			}
 			
+			LOGGER.info("Loaded " + globalEvents.size() + " global Events.");
+			
 			ds = new DataStorage(savegame.getObjectList(), globalEvents);
 			
 		} else {
@@ -161,7 +163,7 @@ public class SaveGameHandler extends DefaultHandler {
 					id = Integer.parseInt(strValue);
 					String value = attr.getValue("string");
 					if (value != null) {
-						savegame.stringMap.put(id, value);
+						savegame.getStringMap().put(id, value);
 					}
 				}
 				break;
@@ -170,7 +172,7 @@ public class SaveGameHandler extends DefaultHandler {
 				if (strValue != null) {
 					id = Integer.parseInt(strValue);
 						currentListId = id;
-						savegame.listMap.put(id, new ArrayList<>());
+						savegame.getListMap().put(id, new ArrayList<>());
 				}
 			}
 		}
@@ -194,7 +196,7 @@ public class SaveGameHandler extends DefaultHandler {
 				if (strValue != null) {
 					value = Integer.parseInt(strValue);
 					if (currentListId != null && value != null) {
-						List<ListValue> entry = savegame.listMap.get(currentListId);
+						List<ListValue> entry = savegame.getListMap().get(currentListId);
 						if (entry != null) {
 							entry.add(new ListValue(valueType, value));
 						}
@@ -207,7 +209,7 @@ public class SaveGameHandler extends DefaultHandler {
 				if (strValue != null) {
 					value = Integer.parseInt(strValue);
 					if (currentListId != null && value != null) {
-						List<ListValue> entry = savegame.listMap.get(currentListId);
+						List<ListValue> entry = savegame.getListMap().get(currentListId);
 						if (entry != null) {
 							entry.add(new ListValue(valueType, value));
 						}
@@ -219,7 +221,7 @@ public class SaveGameHandler extends DefaultHandler {
 				if (strValue != null) {
 				timeValue = Double.valueOf(strValue);
 					if (currentListId != null && timeValue != null) {
-						List<ListValue> entry = savegame.listMap.get(currentListId);
+						List<ListValue> entry = savegame.getListMap().get(currentListId);
 						if (entry != null) {
 							entry.add(new ListValue(valueType, timeValue));
 						}
@@ -230,7 +232,7 @@ public class SaveGameHandler extends DefaultHandler {
 				// xmlkeyword is an actual string, not referencing any value
 				strValue = attr.getValue("value");
 				if (currentListId != null && strValue != null) {
-					List<ListValue> entry = savegame.listMap.get(currentListId);
+					List<ListValue> entry = savegame.getListMap().get(currentListId);
 					if (entry != null) {
 						entry.add(new ListValue(valueType, strValue));
 					}
@@ -242,7 +244,7 @@ public class SaveGameHandler extends DefaultHandler {
 				if (strValue != null) {
 					lengthValue = Double.valueOf(strValue);
 						if (currentListId != null && lengthValue != null) {
-							List<ListValue> entry = savegame.listMap.get(currentListId);
+							List<ListValue> entry = savegame.getListMap().get(currentListId);
 							if (entry != null) {
 								entry.add(new ListValue(valueType, lengthValue));
 							}

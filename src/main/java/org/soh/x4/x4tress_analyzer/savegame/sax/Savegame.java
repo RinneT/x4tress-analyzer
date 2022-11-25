@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.soh.x4.x4tress_analyzer.model.Component;
 import org.soh.x4.x4tress_analyzer.model.GlobalEvent;
 import org.xml.sax.Attributes;
@@ -20,6 +22,8 @@ import org.xml.sax.Attributes;
  *
  */
 public class Savegame {
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(Savegame.class);
 
 	/**
 	 * How to use: The IDX_ values refer to column indices in the
@@ -71,7 +75,7 @@ public class Savegame {
 	 * <i>"xmlkeyword"</i> (Reserved words in X4).<br>
 	 * The key is an Integer ID.
 	 */
-	public HashMap<Integer, String> stringMap = new HashMap<>();
+	private HashMap<Integer, String> stringMap = new HashMap<>();
 
 	/**
 	 * The listMap is a Map of all List values saved in the X4 savegame.<br>
@@ -81,15 +85,16 @@ public class Savegame {
 	 * E.g. to the stringMap in case of the type <i>"string"</i>, or to a different
 	 * List in case of the type <i>"list"</i>.
 	 */
-	public HashMap<Integer, List<ListValue>> listMap = new HashMap<>();
+	private HashMap<Integer, List<ListValue>> listMap = new HashMap<>();
 
 	/**
-	 * Set the savegame reference ID for the GlobalEvents list,<br>
+	 * Set the savegame reference ID for the SoHGlobalEvents list,<br>
 	 * allowing us to link the contained lists to it.
 	 * 
 	 * @param refId the reference ID from the SaveGame
 	 */
 	public void initializeGlobalEventsList(int refId) {
+		LOGGER.debug("SoHGlobalEvents list Id is " + refId + ".");
 		if (refId > 0) {
 			globalEventsListId = refId;
 		}
@@ -126,6 +131,15 @@ public class Savegame {
 	 */
 	public HashMap<Integer, List<ListValue>> getListMap() {
 		return listMap;
+	}
+	
+	/**
+	 * Get the string map containing all String reference entries
+	 * 
+	 * @return the string map
+	 */
+	public HashMap<Integer, String> getStringMap() {
+		return stringMap;
 	}
 
 	/**
