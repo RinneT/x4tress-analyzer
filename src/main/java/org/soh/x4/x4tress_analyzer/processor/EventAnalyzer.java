@@ -7,6 +7,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.soh.x4.x4tress_analyzer.model.GlobalEvent;
+import org.soh.x4.x4tress_analyzer.model.Position;
 import org.soh.x4.x4tress_analyzer.model.ProcessedEvent;
 
 /**
@@ -38,17 +39,17 @@ public class EventAnalyzer {
 	 * The maximum range in meters for two Global Events to be combined
 	 */
 	private static final double EVENT_MAX_RANGE = 30000.0; // 30km
-	
+
 	/**
 	 * Event size to be classified as a battle
 	 */
 	private static final int MIN_SIZE_FIGHT = 2;
-	
+
 	/**
 	 * Event size to be classified as a skirmish
 	 */
 	private static final int MIN_SIZE_SKIRMISH = 4;
-	
+
 	/**
 	 * Event size to be classified as a battle
 	 */
@@ -85,23 +86,20 @@ public class EventAnalyzer {
 		for (List<GlobalEvent> sectorEvents : eventsBySector.values()) {
 			processedEvents.addAll(collectSectorEvents(sectorEvents));
 		}
-		
+
 		// Post Process the Events
 		for (ProcessedEvent pEvent : processedEvents) {
 			Integer numberOfParticipants = pEvent.getNumberOfParticipants();
 			if (numberOfParticipants < MIN_SIZE_FIGHT) {
 				pEvent.setEventType("nothing");
 				pEvent.setScale("false");
-			}
-			else if (numberOfParticipants >= MIN_SIZE_FIGHT && numberOfParticipants < MIN_SIZE_SKIRMISH) {
+			} else if (numberOfParticipants >= MIN_SIZE_FIGHT && numberOfParticipants < MIN_SIZE_SKIRMISH) {
 				pEvent.setEventType("fight");
 				pEvent.setScale("tiny");
-			}
-			else if (numberOfParticipants >= MIN_SIZE_SKIRMISH && numberOfParticipants < MIN_SIZE_BATTLE) {
+			} else if (numberOfParticipants >= MIN_SIZE_SKIRMISH && numberOfParticipants < MIN_SIZE_BATTLE) {
 				pEvent.setEventType("skirmish");
 				pEvent.setScale("medium");
-			}
-			else if (numberOfParticipants >= MIN_SIZE_BATTLE) {
+			} else if (numberOfParticipants >= MIN_SIZE_BATTLE) {
 				pEvent.setEventType("battle");
 				pEvent.setScale("large");
 			}
@@ -130,17 +128,15 @@ public class EventAnalyzer {
 				}
 			}
 
-			// If no processed events exist, create a new one
-			if (!foundEvent) {
+			// If no processed events exist, create a new one (unless the position is unknown!)
+			if (!foundEvent && sectorEvent.getAttackedPos() != null) {
 				LOGGER.debug("Creating new Event in sector '" + sectorEvents.get(0).getSector() + "'!");
 				ProcessedEvent pEvent = new ProcessedEvent();
 				pEvent.setSector(sectorEvent.getSector());
 				pEvent.setNumberOfEvents(1);
 				pEvent.setStartTime(sectorEvent.getTimestamp());
 				pEvent.setEndTime(sectorEvent.getTimestamp());
-				pEvent.setCenterX(sectorEvent.getAttackedPosX());
-				pEvent.setCenterY(sectorEvent.getAttackedPosY());
-				pEvent.setCenterZ(sectorEvent.getAttackedPosZ());
+				pEvent.setCenter(sectorEvent.getAttackedPos());
 				pEvent.addParticipant(sectorEvent.getAttackerId());
 				pEvent.addParticipant(sectorEvent.getAttackedId());
 				processedEvents.add(pEvent);
@@ -195,9 +191,15 @@ public class EventAnalyzer {
 	 */
 	private boolean isInDistance(ProcessedEvent pEvent, GlobalEvent gEvent) {
 		// Check distance
-		double distance = Math.sqrt(Math.pow(gEvent.getAttackedPosX() - pEvent.getCenterX(), 2)
-				+ Math.pow(gEvent.getAttackedPosY() - pEvent.getCenterY(), 2)
-				+ Math.pow(gEvent.getAttackedPosZ() - pEvent.getCenterZ(), 2));
+		Position center = pEvent.getCenter();
+		Position attackedPos = gEvent.getAttackedPos();
+		if (attackedPos == null || center == null) {
+			LOGGER.error("Processed Event " + pEvent.getStartTime() + " center is : " + pEvent.getCenter()
+					+ " Global Event " + gEvent.getTimestamp() + " Attacked Pos is: " + gEvent.getAttackedPos());
+			return false;
+		}
+		double distance = Math.sqrt(Math.pow(attackedPos.getX() - center.getX(), 2)
+				+ Math.pow(attackedPos.getY() - center.getY(), 2) + Math.pow(attackedPos.getZ() - center.getZ(), 2));
 
 		return distance < EVENT_MAX_RANGE;
 	}
@@ -211,13 +213,14 @@ public class EventAnalyzer {
 	 */
 	private ProcessedEvent ShiftEventCenter(ProcessedEvent pEvent, GlobalEvent gEvent) {
 		Integer numberOfEvents = pEvent.getNumberOfEvents();
-		Double centerX = pEvent.getCenterX() * numberOfEvents;
-		Double centerY = pEvent.getCenterY() * numberOfEvents;
-		Double centerZ = pEvent.getCenterZ() * numberOfEvents;
+		Position center = pEvent.getCenter();
+		Double centerX = center.getX() * numberOfEvents;
+		Double centerY = center.getY() * numberOfEvents;
+		Double centerZ = center.getZ() * numberOfEvents;
 
-		centerX = centerX + gEvent.getAttackedPosX();
-		centerY = centerY + gEvent.getAttackedPosY();
-		centerZ = centerZ + gEvent.getAttackedPosZ();
+		centerX = centerX + gEvent.getAttackedPos().getX();
+		centerY = centerY + gEvent.getAttackedPos().getY();
+		centerZ = centerZ + gEvent.getAttackedPos().getZ();
 
 		numberOfEvents++;
 		centerX = centerX / numberOfEvents;
@@ -225,12 +228,13 @@ public class EventAnalyzer {
 		centerZ = centerZ / numberOfEvents;
 
 		LOGGER.debug("Shifting center of processed Event starting at '" + pEvent.getStartTime() + "' from x: "
-				+ pEvent.getCenterX() + " y: " + pEvent.getCenterY() + " z: " + pEvent.getCenterZ() + " to x: "
-				+ centerX + " y: " + centerY + " z: " + centerZ + "!");
+				+ pEvent.getCenter().getX() + " y: " + pEvent.getCenter().getY() + " z: " + pEvent.getCenter().getZ()
+				+ " to x: " + centerX + " y: " + centerY + " z: " + centerZ + "!");
 
-		pEvent.setCenterX(centerX);
-		pEvent.setCenterY(centerY);
-		pEvent.setCenterZ(centerZ);
+		center.setX(centerX);
+		center.setX(centerY);
+		center.setX(centerZ);
+		pEvent.setCenter(center);
 
 		return pEvent;
 	}

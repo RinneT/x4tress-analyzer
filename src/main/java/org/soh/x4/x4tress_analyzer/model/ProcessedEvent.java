@@ -28,9 +28,7 @@ public class ProcessedEvent {
 	/**
 	 * Positional Center of the event
 	 */
-	private Double centerX = null;
-	private Double centerY = null;
-	private Double centerZ = null;
+	private Position center = null;
 
 	/**
 	 * Creates an empty JavaFX TableView for representation of the ProcessedEvent in
@@ -151,27 +149,12 @@ public class ProcessedEvent {
 		this.endTime = endTime;
 	}
 
-	public Double getCenterX() {
-		return centerX;
+	public Position getCenter() {
+		return center;
 	}
 
-	public void setCenterX(Double centerX) {
-		this.centerX = centerX;
+	public void setCenter(Position center) {
+		this.center = center;
 	}
 
-	public Double getCenterY() {
-		return centerY;
-	}
-
-	public void setCenterY(Double centerY) {
-		this.centerY = centerY;
-	}
-
-	public Double getCenterZ() {
-		return centerZ;
-	}
-
-	public void setCenterZ(Double centerZ) {
-		this.centerZ = centerZ;
-	}
 }

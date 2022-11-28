@@ -27,9 +27,7 @@ public class GlobalEvent {
 	private String targetComponent;
 	private String attackedFaction;
 	private String sector;
-	private Double attackedPosX;
-	private Double attackedPosY;
-	private Double attackedPosZ;
+	private Position attackedPos;
 
 	/**
 	 * Creates an empty JavaFX TableView for representation of the GlobalEvent in
@@ -81,22 +79,10 @@ public class GlobalEvent {
 		TableColumn<GlobalEvent, String> sector = new TableColumn<>("Sector");
 		sector.setPrefWidth(150);
 		sector.setCellValueFactory(new PropertyValueFactory<GlobalEvent, String>("sector"));
-		
-		TableColumn<GlobalEvent, Double> attackedPosX = new TableColumn<>("Pos X");
-		attackedPosX.setPrefWidth(80);
-		attackedPosX.setCellValueFactory(new PropertyValueFactory<GlobalEvent, Double>("attackedPosX"));
-		
-		TableColumn<GlobalEvent, Double> attackedPosY = new TableColumn<>("Pos Y");
-		attackedPosY.setPrefWidth(80);
-		attackedPosY.setCellValueFactory(new PropertyValueFactory<GlobalEvent, Double>("attackedPosY"));
-		
-		TableColumn<GlobalEvent, Double> attackedPosZ = new TableColumn<>("Pos Z");
-		attackedPosZ.setPrefWidth(80);
-		attackedPosZ.setCellValueFactory(new PropertyValueFactory<GlobalEvent, Double>("attackedPosZ"));
 	
 
 		eventTable.getColumns().addAll(timestamp, eventType, attackerId, attacker, attackerFaction, attackedId,
-				attacked, targetComponent, attackedFaction, sector, attackedPosX, attackedPosY, attackedPosZ);
+				attacked, targetComponent, attackedFaction, sector);
 
 		return eventTable;
 	}
@@ -196,28 +182,12 @@ public class GlobalEvent {
 		this.sector = sector;
 	}
 
-	public Double getAttackedPosX() {
-		return attackedPosX;
+	public Position getAttackedPos() {
+		return attackedPos;
 	}
 
-	public void setAttackedPosX(Double attackedPosX) {
-		this.attackedPosX = attackedPosX;
-	}
-
-	public Double getAttackedPosY() {
-		return attackedPosY;
-	}
-
-	public void setAttackedPosY(Double attackedPosY) {
-		this.attackedPosY = attackedPosY;
-	}
-
-	public Double getAttackedPosZ() {
-		return attackedPosZ;
-	}
-
-	public void setAttackedPosZ(Double attackedPosZ) {
-		this.attackedPosZ = attackedPosZ;
+	public void setAttackedPos(Position attackedPos) {
+		this.attackedPos = attackedPos;
 	}
 
 }

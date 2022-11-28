@@ -3,11 +3,13 @@ package org.soh.x4.x4tress_analyzer.savegame.sax;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.soh.x4.x4tress_analyzer.model.Component;
 import org.soh.x4.x4tress_analyzer.model.GlobalEvent;
+import org.soh.x4.x4tress_analyzer.model.Position;
 import org.xml.sax.Attributes;
 
 /**
@@ -53,11 +55,7 @@ public class Savegame {
 
 	private static final int IDX_SECTOR = 9;
 	
-	private static final int IDX_ATTACKED_POSX = 10;
-	
-	private static final int IDX_ATTACKED_POSY = 11;
-	
-	private static final int IDX_ATTACKED_POSZ = 12;
+	private static final int IDX_ATTACKED_POS = 10;
 
 	private List<Component> objectList = new ArrayList<>();
 
@@ -86,6 +84,14 @@ public class Savegame {
 	 * List in case of the type <i>"list"</i>.
 	 */
 	private HashMap<Integer, List<ListValue>> listMap = new HashMap<>();
+	
+	/**
+	 * The reference map containing position values.<br>
+	 * In the X4 Savegame structure, all "position" values in a list are actually
+	 * references to the positionMap.<br>
+	 * The key is an Integer ID.
+	 */
+	private HashMap<Integer, Position> positionMap = new HashMap<>();
 
 	/**
 	 * Set the savegame reference ID for the SoHGlobalEvents list,<br>
@@ -129,7 +135,7 @@ public class Savegame {
 	 * 
 	 * @return the list map
 	 */
-	public HashMap<Integer, List<ListValue>> getListMap() {
+	public Map<Integer, List<ListValue>> getListMap() {
 		return listMap;
 	}
 	
@@ -138,8 +144,17 @@ public class Savegame {
 	 * 
 	 * @return the string map
 	 */
-	public HashMap<Integer, String> getStringMap() {
+	public Map<Integer, String> getStringMap() {
 		return stringMap;
+	}
+	
+	/**
+	 * Get the string map containing all String reference entries
+	 * 
+	 * @return the string map
+	 */
+	public Map<Integer, Position> getPositionMap() {
+		return positionMap;
 	}
 
 	/**
@@ -147,12 +162,23 @@ public class Savegame {
 	 * 
 	 * @param idx       the column index
 	 * @param list      The GlobalEvents list entry
-	 * @param stringMap string reference map for String lookup
 	 * @return the String value
 	 */
-	private String getReferenceValue(int idx, List<ListValue> list) {
+	private String getReferenceStringValue(int idx, List<ListValue> list) {
 		Integer valueAsInteger = list.get(idx).getValueAsInteger();
 		return stringMap.get(valueAsInteger);
+	}
+	
+	/**
+	 * Returns the given column index value with its Position map reference
+	 * 
+	 * @param idx       the column index
+	 * @param list      The GlobalEvents list entry
+	 * @return the String value
+	 */
+	private Position getReferencePositionValue(int idx, List<ListValue> list) {
+		Integer valueAsInteger = list.get(idx).getValueAsInteger();
+		return positionMap.get(valueAsInteger);
 	}
 
 	/**
@@ -164,18 +190,16 @@ public class Savegame {
 	public GlobalEvent globalEventFromListEntry(List<ListValue> list) throws IndexOutOfBoundsException {
 		GlobalEvent event = new GlobalEvent();
 		event.setTimestamp(list.get(IDX_TIMESTAMP).getValueAsTimestamp());
-		event.setEventType(getReferenceValue(IDX_EVENT_TYPE, list));
-		event.setAttackerId(getReferenceValue(IDX_ATTACKER_ID, list));
-		event.setAttacker(getReferenceValue(IDX_ATTACKER, list));
-		event.setAttackerFaction(getReferenceValue(IDX_ATTACKER_FACTION, list));
-		event.setAttackedId(getReferenceValue(IDX_ATTACKED_ID, list));
-		event.setAttacked(getReferenceValue(IDX_ATTACKED, list));
-		event.setTargetComponent(getReferenceValue(IDX_TARGET_COMPONENT, list));
-		event.setAttackedFaction(getReferenceValue(IDX_ATTACKED_FACTION, list));
-		event.setSector(getReferenceValue(IDX_SECTOR, list));
-		event.setAttackedPosX(list.get(IDX_ATTACKED_POSX).getValueAsDouble());
-		event.setAttackedPosY(list.get(IDX_ATTACKED_POSY).getValueAsDouble());
-		event.setAttackedPosZ(list.get(IDX_ATTACKED_POSZ).getValueAsDouble());
+		event.setEventType(getReferenceStringValue(IDX_EVENT_TYPE, list));
+		event.setAttackerId(getReferenceStringValue(IDX_ATTACKER_ID, list));
+		event.setAttacker(getReferenceStringValue(IDX_ATTACKER, list));
+		event.setAttackerFaction(getReferenceStringValue(IDX_ATTACKER_FACTION, list));
+		event.setAttackedId(getReferenceStringValue(IDX_ATTACKED_ID, list));
+		event.setAttacked(getReferenceStringValue(IDX_ATTACKED, list));
+		event.setTargetComponent(getReferenceStringValue(IDX_TARGET_COMPONENT, list));
+		event.setAttackedFaction(getReferenceStringValue(IDX_ATTACKED_FACTION, list));
+		event.setSector(getReferenceStringValue(IDX_SECTOR, list));
+		event.setAttackedPos(getReferencePositionValue(IDX_ATTACKED_POS, list));
 		return event;
 	}
 

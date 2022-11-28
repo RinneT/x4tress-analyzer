@@ -1,13 +1,14 @@
 package org.soh.x4.x4tress_analyzer.savegame;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.soh.x4.x4tress_analyzer.model.DataStorage;
 import org.soh.x4.x4tress_analyzer.model.GlobalEvent;
+import org.soh.x4.x4tress_analyzer.model.Position;
 import org.soh.x4.x4tress_analyzer.savegame.sax.ListValue;
 import org.soh.x4.x4tress_analyzer.savegame.sax.Savegame;
 import org.xml.sax.Attributes;
@@ -119,7 +120,7 @@ public class SaveGameHandler extends DefaultHandler {
 			 * 1. Get the Global Events list. This only contains references to other list entries
 			 * 2. For each entry, get the referenced ID and convert that to a Global Event
 			 */
-			HashMap<Integer, List<ListValue>> listMap = savegame.getListMap();
+			Map<Integer, List<ListValue>> listMap = savegame.getListMap();
 			List<ListValue> eventReference = listMap.get(savegame.getGlobalEventsListId());
 			
 			for (ListValue event : eventReference) {
@@ -174,6 +175,19 @@ public class SaveGameHandler extends DefaultHandler {
 						currentListId = id;
 						savegame.getListMap().put(id, new ArrayList<>());
 				}
+				break;
+			case "vector":
+				strValue = attr.getValue("id");
+				if (strValue != null) {
+					id = Integer.parseInt(strValue);
+					String valueX = attr.getValue("x");
+					String valueY = attr.getValue("y");
+					String valueZ = attr.getValue("z");
+					if (valueX != null && valueY != null && valueZ != null) {
+						savegame.getPositionMap().put(id, new Position(Double.parseDouble(valueX), Double.parseDouble(valueY), Double.parseDouble(valueZ)));
+					}
+				}
+				break;
 			}
 		}
 	}
@@ -239,7 +253,7 @@ public class SaveGameHandler extends DefaultHandler {
 				}
 				break;
 			case "length":
-				// xmlkeyword is an actual string, not referencing any value
+				// length is an double value representing a distance
 				strValue = attr.getValue("value");
 				if (strValue != null) {
 					lengthValue = Double.valueOf(strValue);
@@ -250,6 +264,19 @@ public class SaveGameHandler extends DefaultHandler {
 							}
 						}
 					}
+				break;
+			case "position":
+				// In the case of a position, string is always a reference to savegame.positionMap!
+				strValue = attr.getValue("value");
+				if (strValue != null) {
+					value = Integer.parseInt(strValue);
+					if (currentListId != null && value != null) {
+						List<ListValue> entry = savegame.getListMap().get(currentListId);
+						if (entry != null) {
+							entry.add(new ListValue(valueType, value));
+						}
+					}
+				}
 				break;
 			}
 		}
