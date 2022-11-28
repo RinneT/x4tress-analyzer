@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.soh.x4.x4tress_analyzer.model.DataStorage;
 import org.soh.x4.x4tress_analyzer.model.ProcessedEvent;
-import org.soh.x4.x4tress_analyzer.processor.EventProcessor;
+import org.soh.x4.x4tress_analyzer.processor.EventAnalyzer;
 import org.xml.sax.SAXException;
 
 /**
@@ -48,7 +48,7 @@ public class SaveGameLoader {
 		originalInputStream.close();
 		inputStream.close();
 		
-		EventProcessor processor = new EventProcessor();
+		EventAnalyzer processor = new EventAnalyzer();
 		List<ProcessedEvent> processGlobalEvents = processor.processGlobalEvents(result.getGlobalEvents());
 		result.setProcessedEvents(processGlobalEvents);
 		return result;

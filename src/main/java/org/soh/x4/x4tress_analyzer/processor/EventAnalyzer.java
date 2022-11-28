@@ -10,7 +10,7 @@ import org.soh.x4.x4tress_analyzer.model.GlobalEvent;
 import org.soh.x4.x4tress_analyzer.model.ProcessedEvent;
 
 /**
- * The Event Processor.<br>
+ * The Event Analyzer.<br>
  * <br>
  * Analyzes the list of {@link org.soh.x4.x4tress_analyzer.model.GlobalEvent
  * GlobalEvents} and combines them into
@@ -19,12 +19,14 @@ import org.soh.x4.x4tress_analyzer.model.ProcessedEvent;
  * The Event Processor is also responsible for clearing up deprecated data /
  * keeping memory in check.
  * 
+ * This is the reference implementation for soh_analyzer.xml in soh_x4tress
+ * 
  * @author Son of Hubert
  *
  */
-public class EventProcessor {
+public class EventAnalyzer {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(EventProcessor.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(EventAnalyzer.class);
 
 	/**
 	 * The maximum time that may pass for two Global Events to be combined in
@@ -186,7 +188,6 @@ public class EventProcessor {
 
 	/**
 	 * Checks if a given Global Event is within range of a processed Event<br>
-	 * Modifies the Processed Events center coordinates accordingly
 	 * 
 	 * @param pEvent the processed Event
 	 * @param gEvent the global Event
