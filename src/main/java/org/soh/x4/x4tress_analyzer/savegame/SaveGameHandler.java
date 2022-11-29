@@ -1,6 +1,7 @@
 package org.soh.x4.x4tress_analyzer.savegame;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,6 +29,9 @@ public class SaveGameHandler extends DefaultHandler {
 	private static final String TAG_COMPONENT = "component";
 
 	private static final String TAG_VALUE = "value";
+	
+	// represents a table key
+	private static final String TAG_KEY = "key";
 
 	// refs tag encloses the references used in scripts.
 	// has a "type" attribute. E.g. type="string"
@@ -49,6 +53,19 @@ public class SaveGameHandler extends DefaultHandler {
 	 * ListId to reference its values correctly.
 	 */
 	private Integer currentListId = null;
+
+	/**
+	 * Tables can contain further sublists, tables, or immediate values. We save the
+	 * current TableId to reference its values correctly.
+	 */
+	private Integer currentTableId = null;
+
+	/**
+	 * Tables keys are always one line before the respective value in the savefile
+	 * We use only Strings as keys in x4tress, which are of course represented as Integer
+	 * references here.
+	 */
+	private Integer currentTableKey = null;
 
 	@Override
 	public void characters(char[] ch, int start, int length) throws SAXException {
@@ -78,7 +95,7 @@ public class SaveGameHandler extends DefaultHandler {
 			handleTagRef(attr);
 			break;
 		case TAG_VALUE:
-			if ("list".equals(currentRefsType)) {
+			if ("list".equals(currentRefsType) || "table".equals(currentRefsType)) {
 				handleTagValue(attr);
 			} else {
 				if (GLOBAL_EVENTS.equals(attr.getValue("name")) && "list".equals(attr.getValue("type"))) {
@@ -86,6 +103,10 @@ public class SaveGameHandler extends DefaultHandler {
 					savegame.initializeGlobalEventsList(globlEventsReferenceId);
 				}
 			}
+			break;
+		case TAG_KEY:
+			// Table keys
+			handleTagKey(attr);
 			break;
 		}
 	}
@@ -98,12 +119,18 @@ public class SaveGameHandler extends DefaultHandler {
 		case TAG_REFS:
 			currentRefsType = null;
 			break;
+		case TAG_REF:
+			currentListId = null;
+			currentTableId = null;
 		}
 	}
-	
+
 	/**
-	 * Convert the {@link org.soh.x4.x4tress_analyzer.savegame.sax.Savegame Savegame} object used during savegame parsing<br>
-	 * into a {@link org.soh.x4.x4tress_analyzer.model.DataStorage DataStorage} object used for processing.
+	 * Convert the {@link org.soh.x4.x4tress_analyzer.savegame.sax.Savegame
+	 * Savegame} object used during savegame parsing<br>
+	 * into a {@link org.soh.x4.x4tress_analyzer.model.DataStorage DataStorage}
+	 * object used for processing.
+	 * 
 	 * @return the DataStorage object.
 	 * @throws NullPointerException if the savegame was not successfully loaded
 	 */
@@ -112,45 +139,49 @@ public class SaveGameHandler extends DefaultHandler {
 		if (savegame != null) {
 			LOGGER.info("Checked " + componentsChecked + " components.");
 			LOGGER.info("Loaded " + savegame.getObjectList().size() + " components of type Station or Ship.");
-			
+
 			ArrayList<GlobalEvent> globalEvents = new ArrayList<>();
 			
+			savegame.resolveTableKeys();
+
 			/**
-			 * Steps:
-			 * 1. Get the Global Events list. This only contains references to other list entries
-			 * 2. For each entry, get the referenced ID and convert that to a Global Event
+			 * Steps: 1. Get the Global Events list. This only contains references to other
+			 * list entries 2. For each entry, get the referenced ID and convert that to a
+			 * Global Event
 			 */
 			Map<Integer, List<ListValue>> listMap = savegame.getListMap();
+			Map<Integer, Map<Integer, ListValue>> tableMap = savegame.getTableMap();			
 			List<ListValue> eventReference = listMap.get(savegame.getGlobalEventsListId());
-			
+
 			for (ListValue event : eventReference) {
-				if ("list".equals(event.getType()) && event.getValue() != null) {
+				if ("table".equals(event.getType()) && event.getValue() != null) {
 					try {
-						List<ListValue> eventAsList = listMap.get(event.getValueAsInteger());
+						Map<Integer, ListValue> eventAsList = tableMap.get(event.getValueAsInteger());
 						GlobalEvent globalEventFromListEntry = savegame.globalEventFromListEntry(eventAsList);
-						globalEvents.add(globalEventFromListEntry);																
+						globalEvents.add(globalEventFromListEntry);
 					} catch (IndexOutOfBoundsException e) {
-						LOGGER.error("Failed to create Global Event entry for Event reference Id '" + event.getValue() + "'!", e.getMessage());
+						LOGGER.error("Failed to create Global Event entry for Event reference Id '" + event.getValue()
+								+ "'!", e.getMessage());
 					}
 				} else {
 					LOGGER.warn("Found a non-reference entry in the GlobalEvents reference table!");
 				}
 			}
-			
+
 			LOGGER.info("Loaded " + globalEvents.size() + " global Events.");
-			
+
 			ds = new DataStorage(savegame.getObjectList(), globalEvents);
-			
+
 		} else {
 			LOGGER.warn("Tried loading the components list before a file was parsed!");
 			throw new NullPointerException("Tried loading the components list before a file was parsed!");
 		}
 		return ds;
 	}
-	
-	
+
 	/**
 	 * Read the required data from an xml tag
+	 * 
 	 * @param attr The tag attributes
 	 */
 	private void handleTagRef(Attributes attr) {
@@ -172,8 +203,16 @@ public class SaveGameHandler extends DefaultHandler {
 				strValue = attr.getValue("id");
 				if (strValue != null) {
 					id = Integer.parseInt(strValue);
-						currentListId = id;
-						savegame.getListMap().put(id, new ArrayList<>());
+					currentListId = id;
+					savegame.getListMap().put(id, new ArrayList<>());
+				}
+				break;
+			case "table":
+				strValue = attr.getValue("id");
+				if (strValue != null) {
+					id = Integer.parseInt(strValue);
+					currentTableId = id;
+					savegame.getTableMap().put(id, new HashMap<Integer, ListValue>());
 				}
 				break;
 			case "vector":
@@ -184,10 +223,34 @@ public class SaveGameHandler extends DefaultHandler {
 					String valueY = attr.getValue("y");
 					String valueZ = attr.getValue("z");
 					if (valueX != null && valueY != null && valueZ != null) {
-						savegame.getPositionMap().put(id, new Position(Double.parseDouble(valueX), Double.parseDouble(valueY), Double.parseDouble(valueZ)));
+						savegame.getPositionMap().put(id, new Position(Double.parseDouble(valueX),
+								Double.parseDouble(valueY), Double.parseDouble(valueZ)));
 					}
 				}
 				break;
+			}
+		}
+	}
+
+	/**
+	 * Add a value to a list or table<br>
+	 * Determines what to add it to depending on<br>
+	 * currentListId, currentTableId and currentTableKey
+	 * @param valueType the value type
+	 * @param value the value
+	 */
+	private void addToListOrTable(String valueType, Object value) {
+		if (value != null) {
+			if (currentListId != null) {
+				List<ListValue> entry = savegame.getListMap().get(currentListId);
+				if (entry != null) {
+					entry.add(new ListValue(valueType, value));
+				}
+			} else if (currentTableId != null && currentTableKey != null) {
+				Map<Integer, ListValue> entry = savegame.getTableMap().get(currentTableId);
+				if (entry != null) {
+					entry.put(currentTableKey, new ListValue(valueType, value));
+				}
 			}
 		}
 	}
@@ -209,12 +272,14 @@ public class SaveGameHandler extends DefaultHandler {
 				strValue = attr.getValue("value");
 				if (strValue != null) {
 					value = Integer.parseInt(strValue);
-					if (currentListId != null && value != null) {
-						List<ListValue> entry = savegame.getListMap().get(currentListId);
-						if (entry != null) {
-							entry.add(new ListValue(valueType, value));
-						}
-					}					
+					addToListOrTable(valueType, value);
+				}
+				break;
+			case "table":
+				strValue = attr.getValue("value");
+				if (strValue != null) {
+					value = Integer.parseInt(strValue);
+					addToListOrTable(valueType, value);
 				}
 				break;
 			case "string":
@@ -222,60 +287,63 @@ public class SaveGameHandler extends DefaultHandler {
 				strValue = attr.getValue("value");
 				if (strValue != null) {
 					value = Integer.parseInt(strValue);
-					if (currentListId != null && value != null) {
-						List<ListValue> entry = savegame.getListMap().get(currentListId);
-						if (entry != null) {
-							entry.add(new ListValue(valueType, value));
-						}
-					}
+					addToListOrTable(valueType, value);
 				}
 				break;
 			case "time":
 				strValue = attr.getValue("value");
 				if (strValue != null) {
-				timeValue = Double.valueOf(strValue);
-					if (currentListId != null && timeValue != null) {
-						List<ListValue> entry = savegame.getListMap().get(currentListId);
-						if (entry != null) {
-							entry.add(new ListValue(valueType, timeValue));
-						}
-					}
+					timeValue = Double.valueOf(strValue);
+					addToListOrTable(valueType, timeValue);
 				}
 				break;
 			case "xmlkeyword":
 				// xmlkeyword is an actual string, not referencing any value
 				strValue = attr.getValue("value");
-				if (currentListId != null && strValue != null) {
-					List<ListValue> entry = savegame.getListMap().get(currentListId);
-					if (entry != null) {
-						entry.add(new ListValue(valueType, strValue));
-					}
-				}
+				addToListOrTable(valueType, strValue);
 				break;
 			case "length":
 				// length is an double value representing a distance
 				strValue = attr.getValue("value");
 				if (strValue != null) {
 					lengthValue = Double.valueOf(strValue);
-						if (currentListId != null && lengthValue != null) {
-							List<ListValue> entry = savegame.getListMap().get(currentListId);
-							if (entry != null) {
-								entry.add(new ListValue(valueType, lengthValue));
-							}
-						}
-					}
+					addToListOrTable(valueType, lengthValue);
+				}
 				break;
 			case "position":
-				// In the case of a position, string is always a reference to savegame.positionMap!
+				// In the case of a position, string is always a reference to
+				// savegame.positionMap!
 				strValue = attr.getValue("value");
 				if (strValue != null) {
 					value = Integer.parseInt(strValue);
-					if (currentListId != null && value != null) {
-						List<ListValue> entry = savegame.getListMap().get(currentListId);
-						if (entry != null) {
-							entry.add(new ListValue(valueType, value));
-						}
-					}
+					addToListOrTable(valueType, value);
+				}
+				break;
+			}
+		}
+	}
+	
+	/**
+	 * Reads a key tag and saves it to the current table key
+	 * 
+	 * @param attr
+	 */
+	private void handleTagKey(Attributes attr) {
+		String valueType = attr.getValue("type");
+		if (valueType != null) {
+			String strValue = null;
+			/*
+			 * Theoretically, the key should be a ListValue, as X4 supports different Key types,
+			 * but for x4tress we use only String
+			 */
+			switch (valueType) {
+			case "string":
+				// In the case of a list, string is always a reference to savegame.stringMap!
+				strValue = attr.getValue("value");
+				if (strValue != null) {
+					currentTableKey = Integer.parseInt(strValue);
+					// Add the key to the table key map for later String reference mapping
+					savegame.getTableKeyMap().put(currentTableKey, null);
 				}
 				break;
 			}

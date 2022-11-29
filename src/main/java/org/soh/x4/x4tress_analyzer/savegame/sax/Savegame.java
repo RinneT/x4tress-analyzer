@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,40 +25,106 @@ import org.xml.sax.Attributes;
  *
  */
 public class Savegame {
-	
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(Savegame.class);
 
 	/**
-	 * How to use: The IDX_ values refer to column indices in the
-	 * global.$SoHGlobalEvents List in soh_x_fourtress, as defined in soh_observer.xml
-	 * If the list definition in soh_x_fourtress changes, change this list
-	 * accordingly, as well as the globalEventFromListEntry(List<ListValue>)
-	 * function and the GlobalEvent class.
+	 * How to use: The idx values refer to table keys in the
+	 * global.$SoHGlobalEvents List table entries in soh_x_fourtress, as defined in
+	 * soh_observer.xml If the list definition in soh_x_fourtress changes, change
+	 * this list accordingly, as well as the
+	 * <i>globalEventFromListEntry(Map<Integer, ListValue> entry)</i> function and the GlobalEvent class,
+	 * as well as the <i>resolveTableKeys()</i> function;
+	 * 
+	 * Unfortunately X4 can sometimes save multiple references for the same key.
+	 * As such, each keyword can have multiple Integers referenced as keys. Hence why we save them as arrays.
+	 * 
+	 * A more elegant way would be to convert the table map into a string key map in a second step, just like in X4.
+	 * 
 	 */
 
-	private static final int IDX_TIMESTAMP = 0;
+	private List<Integer> idxTimestamp = new ArrayList<>();
 
-	private static final int IDX_EVENT_TYPE = 1;
+	private List<Integer> idxEventType = new ArrayList<>();
 
-	private static final int IDX_ATTACKER_ID = 2;
+	private List<Integer> idxAttackerId = new ArrayList<>();
 
-	private static final int IDX_ATTACKER = 3;
+	private List<Integer> idxAttacker = new ArrayList<>();
 
-	private static final int IDX_ATTACKER_FACTION = 4;
+	private List<Integer> idxAttackerFaction = new ArrayList<>();
 
-	private static final int IDX_ATTACKED_ID = 5;
+	private List<Integer> idxAttackedId = new ArrayList<>();
 
-	private static final int IDX_ATTACKED = 6;
+	private List<Integer> idxAttacked = new ArrayList<>();
 
-	private static final int IDX_TARGET_COMPONENT = 7;
+	private List<Integer> idxTargetComponent = new ArrayList<>();
 
-	private static final int IDX_ATTACKED_FACTION = 8;
+	private List<Integer> idxAttackedFaction = new ArrayList<>();
 
-	private static final int IDX_SECTOR = 9;
-	
-	private static final int IDX_ATTACKED_POS = 10;
+	private List<Integer> idxSector = new ArrayList<>();
+
+	private List<Integer> idxAttackedPos = new ArrayList<>();
 
 	private List<Component> objectList = new ArrayList<>();
+
+	/**
+	 * The table key map contains the mapping of table keys as Integer with their
+	 * String references
+	 */
+	private Map<Integer, String> tableKeyMap = new HashMap<>();
+
+	public Map<Integer, String> getTableKeyMap() {
+		return tableKeyMap;
+	}
+
+	/**
+	 * Resolves all table keys as Strings from the String map
+	 * Saves the referenced Integer keys in idx values.
+	 */
+	public void resolveTableKeys() {
+		for (Entry<Integer, String> entry : tableKeyMap.entrySet()) {
+			Integer key = entry.getKey();
+			String strValue = stringMap.get(key);
+			entry.setValue(strValue);
+			if (strValue != null && key > 0) {
+				switch (strValue) {
+				case "$timestamp":
+					idxTimestamp.add(key);
+					break;
+				case "$eventType":
+					idxEventType.add(key);
+					break;
+				case "$attackerId":
+					idxAttackerId.add(key);
+					break;
+				case "$attacker":
+					idxAttacker.add(key);
+					break;
+				case "$attackerFaction":
+					idxAttackerFaction.add(key);
+					break;
+				case "$attackedId":
+					idxAttackedId.add(key);
+					break;
+				case "$attacked":
+					idxAttacked.add(key);
+					break;
+				case "$targetComponent":
+					idxTargetComponent.add(key);
+					break;
+				case "$attackedFaction":
+					idxAttackedFaction.add(key);
+					break;
+				case "$sector":
+					idxSector.add(key);
+					break;
+				case "$attackedPos":
+					idxAttackedPos.add(key);
+					break;
+				}
+			}
+		}
+	}
 
 	private int globalEventsListId;
 
@@ -73,7 +140,7 @@ public class Savegame {
 	 * <i>"xmlkeyword"</i> (Reserved words in X4).<br>
 	 * The key is an Integer ID.
 	 */
-	private HashMap<Integer, String> stringMap = new HashMap<>();
+	private Map<Integer, String> stringMap = new HashMap<>();
 
 	/**
 	 * The listMap is a Map of all List values saved in the X4 savegame.<br>
@@ -82,16 +149,30 @@ public class Savegame {
 	 * or as in most cases, a reference to a different value.<br>
 	 * E.g. to the stringMap in case of the type <i>"string"</i>, or to a different
 	 * List in case of the type <i>"list"</i>.
+	 * For x4tress, we only need a single list, referenced in <i>globalEventsListId</i>.
 	 */
-	private HashMap<Integer, List<ListValue>> listMap = new HashMap<>();
-	
+	private Map<Integer, List<ListValue>> listMap = new HashMap<>();
+
+	/**
+	 * The tableMap is a Map of all table values saved in the X4 savegame.<br>
+	 * List values contain a Type and a value. The value can be the value
+	 * itself,<br>
+	 * or as in most cases, a reference to a different value.<br>
+	 * E.g. to the stringMap in case of the type <i>"string"</i>, or to a different
+	 * List in case of the type <i>"list"</i>.
+	 * Each value has a unique key.<br>
+	 * <br>
+	 * X4 tables are comparable to Java Maps
+	 */
+	private Map<Integer, Map<Integer, ListValue>> tableMap = new HashMap<>();
+
 	/**
 	 * The reference map containing position values.<br>
 	 * In the X4 Savegame structure, all "position" values in a list are actually
 	 * references to the positionMap.<br>
 	 * The key is an Integer ID.
 	 */
-	private HashMap<Integer, Position> positionMap = new HashMap<>();
+	private Map<Integer, Position> positionMap = new HashMap<>();
 
 	/**
 	 * Set the savegame reference ID for the SoHGlobalEvents list,<br>
@@ -131,14 +212,23 @@ public class Savegame {
 	}
 
 	/**
-	 * Get the list map containing all Global Event entries
+	 * Get the list map containing all List entries
 	 * 
 	 * @return the list map
 	 */
 	public Map<Integer, List<ListValue>> getListMap() {
 		return listMap;
 	}
-	
+
+	/**
+	 * Get the table map containing all Global Event entries
+	 * 
+	 * @return the list map
+	 */
+	public Map<Integer, Map<Integer, ListValue>> getTableMap() {
+		return tableMap;
+	}
+
 	/**
 	 * Get the string map containing all String reference entries
 	 * 
@@ -147,7 +237,7 @@ public class Savegame {
 	public Map<Integer, String> getStringMap() {
 		return stringMap;
 	}
-	
+
 	/**
 	 * Get the string map containing all String reference entries
 	 * 
@@ -160,47 +250,66 @@ public class Savegame {
 	/**
 	 * Returns the given column index value with its string map reference
 	 * 
-	 * @param idx       the column index
-	 * @param list      The GlobalEvents list entry
+	 * @param idx  the column index
+	 * @param list The GlobalEvents list entry
 	 * @return the String value
 	 */
-	private String getReferenceStringValue(int idx, List<ListValue> list) {
+	private String getReferenceStringValue(Integer idx, Map<Integer, ListValue> list) {
+		if (idx == null || list == null) {
+			return null;
+		}
 		Integer valueAsInteger = list.get(idx).getValueAsInteger();
 		return stringMap.get(valueAsInteger);
 	}
-	
+
 	/**
 	 * Returns the given column index value with its Position map reference
 	 * 
-	 * @param idx       the column index
-	 * @param list      The GlobalEvents list entry
+	 * @param idx  the column index
+	 * @param list The GlobalEvents list entry
 	 * @return the String value
 	 */
-	private Position getReferencePositionValue(int idx, List<ListValue> list) {
+	private Position getReferencePositionValue(int idx, Map<Integer, ListValue> list) {
 		Integer valueAsInteger = list.get(idx).getValueAsInteger();
 		return positionMap.get(valueAsInteger);
 	}
 
 	/**
-	 * Creates a Global Event object from a Savegame List entry
+	 * Creates a Global Event object from a Savegame table entry
 	 * 
-	 * @param list The GlobalEvents list entry
+	 * @param entry The GlobalEvents table entry
 	 * @return The GlobalEvents object
 	 */
-	public GlobalEvent globalEventFromListEntry(List<ListValue> list) throws IndexOutOfBoundsException {
+	public GlobalEvent globalEventFromListEntry(Map<Integer, ListValue> entry) throws IndexOutOfBoundsException {
 		GlobalEvent event = new GlobalEvent();
-		event.setTimestamp(list.get(IDX_TIMESTAMP).getValueAsTimestamp());
-		event.setEventType(getReferenceStringValue(IDX_EVENT_TYPE, list));
-		event.setAttackerId(getReferenceStringValue(IDX_ATTACKER_ID, list));
-		event.setAttacker(getReferenceStringValue(IDX_ATTACKER, list));
-		event.setAttackerFaction(getReferenceStringValue(IDX_ATTACKER_FACTION, list));
-		event.setAttackedId(getReferenceStringValue(IDX_ATTACKED_ID, list));
-		event.setAttacked(getReferenceStringValue(IDX_ATTACKED, list));
-		event.setTargetComponent(getReferenceStringValue(IDX_TARGET_COMPONENT, list));
-		event.setAttackedFaction(getReferenceStringValue(IDX_ATTACKED_FACTION, list));
-		event.setSector(getReferenceStringValue(IDX_SECTOR, list));
-		event.setAttackedPos(getReferencePositionValue(IDX_ATTACKED_POS, list));
+		event.setTimestamp(entry.get(getTableKeyForEntry(entry, idxTimestamp)).getValueAsTimestamp());
+		event.setEventType(getReferenceStringValue(getTableKeyForEntry(entry, idxEventType), entry));
+		event.setAttackerId(getReferenceStringValue(getTableKeyForEntry(entry, idxAttackerId), entry));
+		event.setAttacker(getReferenceStringValue(getTableKeyForEntry(entry, idxAttacker), entry));
+		event.setAttackerFaction(getReferenceStringValue(getTableKeyForEntry(entry, idxAttackerFaction), entry));
+		event.setAttackedId(getReferenceStringValue(getTableKeyForEntry(entry, idxAttackedId), entry));
+		event.setAttacked(getReferenceStringValue(getTableKeyForEntry(entry, idxAttacked), entry));
+		event.setTargetComponent(getReferenceStringValue(getTableKeyForEntry(entry, idxTargetComponent), entry));
+		event.setAttackedFaction(getReferenceStringValue(getTableKeyForEntry(entry, idxAttackedFaction), entry));
+		event.setSector(getReferenceStringValue(getTableKeyForEntry(entry, idxSector), entry));
+		event.setAttackedPos(getReferencePositionValue(getTableKeyForEntry(entry, idxAttackedPos), entry));
 		return event;
+	}
+	
+	/**
+	 * Finds the correct key for the desired value.<br>
+	 * Ugly hack for the possibility that a table key (e.g. $timestamp) has different references in the savegame
+	 * @param entry the map entry
+	 * @param idxList the key list
+	 * @return the correct key or null if no key was found.
+	 */
+	private Integer getTableKeyForEntry(Map<Integer, ListValue> entry, List<Integer> idxList) {
+		for (Integer key : idxList) {
+			if (entry.containsKey(key)) {
+				return key;
+			}
+		}
+		return null;
 	}
 
 }
