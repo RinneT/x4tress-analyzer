@@ -15,32 +15,36 @@ import org.xml.sax.Attributes;
  *
  */
 public class ListValue {
-	
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(ListValue.class);
 
 	private static final String TYPE_TIME = "time";
-	
-	private static final String TYPE_STRING = "xmlkeyword";
-	
+
+	private static final String[] TYPE_STRING = { "xmlkeyword", "shiptype", "class" };
+
 	/**
-	 * As pure strings and lists are saved as references,
-	 * the value type "string" and "list" are actually Integers
+	 * As pure strings and lists are saved as references, the value type "string"
+	 * and "list" are actually Integers
 	 */
-	private static final String[] TYPE_INTEGER = {"string" , "list"};
-	
-	private static final String[] TYPE_DOUBLE = {"length"};
+	private static final String[] TYPE_INTEGER = { "string", "list" };
+
+	private static final String[] TYPE_DOUBLE = { "length" };
 
 	/**
 	 * Define the starting time of X4 in Milliseconds<br>
-	 * The starting time is defined as <i>825-02-08 : 11:00</i> (yyy-MM-dd : HH:SS).<br>
-	 * Due to some time shenanigans LocalDateTime.of(825, 2, 8, 11, 0) results in the actual time being<br>
-	 * <i>825-02-04 12:00</i>! I don't wish to spend time on finding the cause, hence the below workaround time
+	 * The starting time is defined as <i>825-02-08 : 11:00</i> (yyy-MM-dd :
+	 * HH:SS).<br>
+	 * Due to some time shenanigans LocalDateTime.of(825, 2, 8, 11, 0) results in
+	 * the actual time being<br>
+	 * <i>825-02-04 12:00</i>! I don't wish to spend time on finding the cause,
+	 * hence the below workaround time
 	 */
 	private static final Long X4_STARTING_TIME = java.sql.Timestamp
 			.from(LocalDateTime.of(825, 2, 12, 10, 0).toInstant(ZoneOffset.ofHours(0))).getTime();
 
 	/**
 	 * Creates a new ListValue object.
+	 * 
 	 * @param type  the list entry type.
 	 * @param value the list entry value.
 	 */
@@ -72,8 +76,8 @@ public class ListValue {
 	 * E.g. in the case of <i>"string"</i> or <i>"list"</i>, it is a reference to
 	 * the string map or other list values.<br>
 	 * In this case, parse this as an Integer. In the case of <i>"xmlkeyword"</i>,
-	 * it is a standalone String. In the case of <i>"time"</i> or <i>"length"</i>, parse it as a
-	 * float/double.
+	 * it is a standalone String. In the case of <i>"time"</i> or <i>"length"</i>,
+	 * parse it as a float/double.
 	 */
 	private Object value;
 
@@ -96,8 +100,11 @@ public class ListValue {
 	/**
 	 * Return the list value as a timestamp.<br>
 	 * In X4, time starts at 825-02-08 : 11:00 (YYY-MM-DD : HH:MM)<br>
-	 * The <i>time</i> value in the savegame is the time passed in game in seconds, with milliseconds after the decimal point.<br>
-	 * Time in X4 passes the same as on earth (1sec = 100ms, 1min = 60sec, 1h = 60min, 1d = 24h)
+	 * The <i>time</i> value in the savegame is the time passed in game in seconds,
+	 * with milliseconds after the decimal point.<br>
+	 * Time in X4 passes the same as on earth (1sec = 100ms, 1min = 60sec, 1h =
+	 * 60min, 1d = 24h)
+	 * 
 	 * @return The Timestamp in X4 time
 	 */
 	public Timestamp getValueAsTimestamp() {
@@ -110,22 +117,26 @@ public class ListValue {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Returns the list value as a String.
+	 * 
 	 * @return The String value
 	 */
 	public String getValueAsString() {
-		if (TYPE_STRING.equalsIgnoreCase(type) && value != null && value instanceof String) {
-			String valueAsString = (String) value;
-			return valueAsString;
+		for (String type : TYPE_STRING) {
+			if (type.equalsIgnoreCase(type) && value != null && value instanceof String) {
+				String valueAsString = (String) value;
+				return valueAsString;
+			}
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Returns the list value as Integer.<br>
 	 * Note that references (e.g. strings or lists) are also stored as Integers!
+	 * 
 	 * @return The Integer value
 	 */
 	public Integer getValueAsInteger() {
@@ -133,14 +144,15 @@ public class ListValue {
 			if (type.equalsIgnoreCase(type) && value != null && value instanceof Integer) {
 				Integer valueAsInt = (Integer) value;
 				return valueAsInt;
-			}			
+			}
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Returns the list value as Integer.<br>
 	 * Note that references (e.g. strings or lists) are also stored as Integers!
+	 * 
 	 * @return The Integer value
 	 */
 	public Double getValueAsDouble() {
@@ -148,7 +160,7 @@ public class ListValue {
 			if (type.equalsIgnoreCase(type) && value != null && value instanceof Double) {
 				Double valueAsDouble = (Double) value;
 				return valueAsDouble;
-			}			
+			}
 		}
 		return null;
 	}

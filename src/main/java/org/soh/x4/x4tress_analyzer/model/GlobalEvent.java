@@ -21,9 +21,11 @@ public class GlobalEvent {
 	private String eventType;
 	private String attackerId;
 	private String attacker;
+	private String attackerType;
 	private String attackerFaction;
 	private String attackedId;
 	private String attacked;
+	private String attackedType;
 	private String targetComponent;
 	private String attackedFaction;
 	private String sector;
@@ -55,6 +57,10 @@ public class GlobalEvent {
 		TableColumn<GlobalEvent, String> attacker = new TableColumn<>("Attacker Name");
 		attacker.setPrefWidth(200);
 		attacker.setCellValueFactory(new PropertyValueFactory<GlobalEvent, String>("attacker"));
+		
+		TableColumn<GlobalEvent, String> attackerType = new TableColumn<>("Attacker Type");
+		attackerType.setPrefWidth(200);
+		attackerType.setCellValueFactory(new PropertyValueFactory<GlobalEvent, String>("attackerType"));
 
 		TableColumn<GlobalEvent, String> attackerFaction = new TableColumn<>("Attacker Faction");
 		attackerFaction.setPrefWidth(150);
@@ -64,9 +70,13 @@ public class GlobalEvent {
 		attackedId.setPrefWidth(80);
 		attackedId.setCellValueFactory(new PropertyValueFactory<GlobalEvent, String>("attackedId"));
 
-		TableColumn<GlobalEvent, String> attacked = new TableColumn<>("Attacker Name");
+		TableColumn<GlobalEvent, String> attacked = new TableColumn<>("Attacked Name");
 		attacked.setPrefWidth(200);
 		attacked.setCellValueFactory(new PropertyValueFactory<GlobalEvent, String>("attacked"));
+		
+		TableColumn<GlobalEvent, String> attackedType = new TableColumn<>("Attacked Type");
+		attackedType.setPrefWidth(200);
+		attackedType.setCellValueFactory(new PropertyValueFactory<GlobalEvent, String>("attackedType"));
 
 		TableColumn<GlobalEvent, String> targetComponent = new TableColumn<>("Target Component");
 		targetComponent.setPrefWidth(200);
@@ -81,8 +91,8 @@ public class GlobalEvent {
 		sector.setCellValueFactory(new PropertyValueFactory<GlobalEvent, String>("sector"));
 	
 
-		eventTable.getColumns().addAll(timestamp, eventType, attackerId, attacker, attackerFaction, attackedId,
-				attacked, targetComponent, attackedFaction, sector);
+		eventTable.getColumns().addAll(timestamp, eventType, attackerId, attacker, attackerType, attackerFaction, attackedId,
+				attacked, attackedType, targetComponent, attackedFaction, sector);
 
 		return eventTable;
 	}
@@ -133,6 +143,14 @@ public class GlobalEvent {
 	public void setAttacker(String attacker) {
 		this.attacker = attacker;
 	}
+	
+	public String getAttackerType() {
+		return attackerType;
+	}
+
+	public void setAttackerType(String attackerType) {
+		this.attackerType = attackerType;
+	}
 
 	public String getAttackerFaction() {
 		return attackerFaction;
@@ -156,6 +174,14 @@ public class GlobalEvent {
 
 	public void setAttacked(String attacked) {
 		this.attacked = attacked;
+	}
+	
+	public String getAttackedType() {
+		return attackedType;
+	}
+
+	public void setAttackedType(String attackedType) {
+		this.attackedType = attackedType;
 	}
 
 	public String getTargetComponent() {

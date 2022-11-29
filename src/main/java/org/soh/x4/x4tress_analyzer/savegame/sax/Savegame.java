@@ -50,12 +50,16 @@ public class Savegame {
 	private List<Integer> idxAttackerId = new ArrayList<>();
 
 	private List<Integer> idxAttacker = new ArrayList<>();
+	
+	private List<Integer> idxAttackerType = new ArrayList<>();
 
 	private List<Integer> idxAttackerFaction = new ArrayList<>();
 
 	private List<Integer> idxAttackedId = new ArrayList<>();
 
 	private List<Integer> idxAttacked = new ArrayList<>();
+	
+	private List<Integer> idxAttackedType = new ArrayList<>();
 
 	private List<Integer> idxTargetComponent = new ArrayList<>();
 
@@ -100,6 +104,9 @@ public class Savegame {
 				case "$attacker":
 					idxAttacker.add(key);
 					break;
+				case "$attackerType":
+					idxAttackerType.add(key);
+					break;
 				case "$attackerFaction":
 					idxAttackerFaction.add(key);
 					break;
@@ -108,6 +115,9 @@ public class Savegame {
 					break;
 				case "$attacked":
 					idxAttacked.add(key);
+					break;
+				case "$attackedType":
+					idxAttackedType.add(key);
 					break;
 				case "$targetComponent":
 					idxTargetComponent.add(key);
@@ -286,9 +296,11 @@ public class Savegame {
 		event.setEventType(getReferenceStringValue(getTableKeyForEntry(entry, idxEventType), entry));
 		event.setAttackerId(getReferenceStringValue(getTableKeyForEntry(entry, idxAttackerId), entry));
 		event.setAttacker(getReferenceStringValue(getTableKeyForEntry(entry, idxAttacker), entry));
+		event.setAttackerType(entry.get(getTableKeyForEntry(entry, idxAttackerType)).getValueAsString());
 		event.setAttackerFaction(getReferenceStringValue(getTableKeyForEntry(entry, idxAttackerFaction), entry));
 		event.setAttackedId(getReferenceStringValue(getTableKeyForEntry(entry, idxAttackedId), entry));
 		event.setAttacked(getReferenceStringValue(getTableKeyForEntry(entry, idxAttacked), entry));
+		event.setAttackedType(entry.get(getTableKeyForEntry(entry, idxAttackedType)).getValueAsString());
 		event.setTargetComponent(getReferenceStringValue(getTableKeyForEntry(entry, idxTargetComponent), entry));
 		event.setAttackedFaction(getReferenceStringValue(getTableKeyForEntry(entry, idxAttackedFaction), entry));
 		event.setSector(getReferenceStringValue(getTableKeyForEntry(entry, idxSector), entry));

@@ -302,6 +302,16 @@ public class SaveGameHandler extends DefaultHandler {
 				strValue = attr.getValue("value");
 				addToListOrTable(valueType, strValue);
 				break;
+			case "shiptype":
+				// xmlkeyword is an actual string, not referencing any value
+				strValue = attr.getValue("value");
+				addToListOrTable(valueType, strValue);
+				break;
+			case "class":
+				// xmlkeyword is an actual string, not referencing any value
+				strValue = attr.getValue("value");
+				addToListOrTable(valueType, strValue);
+				break;
 			case "length":
 				// length is an double value representing a distance
 				strValue = attr.getValue("value");
