@@ -1,7 +1,10 @@
 package org.soh.x4.x4tress_analyzer.model;
 
 import java.sql.Timestamp;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -16,15 +19,17 @@ import javafx.scene.control.cell.PropertyValueFactory;
  */
 public class ProcessedEvent {
 
-	private String eventId = null; // Must be unique. Used to link GlobalEvents in the UI 
+	private EventName eventName = null; 
 	private String eventType = null;
 	private Integer numberOfEvents = 0;
 	private String scale = null;
 	private String sector = null;
 	private Integer numberOfParticipants = null;
-	private HashSet<String> participants = new HashSet<>();
+	private Map<String, String> participants = new HashMap<>();
 	private Timestamp startTime = null;
 	private Timestamp endTime = null;
+	private List<GlobalEvent> majorEvents = new ArrayList<>();
+	
 	/**
 	 * Positional Center of the event
 	 */
@@ -83,9 +88,17 @@ public class ProcessedEvent {
 	 */
 	public Boolean matchesUnit(String unitCode) {
 		if (unitCode != null) {
-			return participants.contains(unitCode);
+			return participants.containsKey(unitCode);
 		}
 		return false;
+	}
+
+	public EventName getEventName() {
+		return eventName;
+	}
+
+	public void setEventName(EventName eventName) {
+		this.eventName = eventName;
 	}
 
 	public String getEventType() {
@@ -124,12 +137,12 @@ public class ProcessedEvent {
 		return numberOfParticipants;
 	}
 
-	public HashSet<String> getParticipants() {
+	public Map<String, String> getParticipants() {
 		return participants;
 	}
 
-	public void addParticipant(String participant) {
-		this.participants.add(participant);
+	public void addParticipant(String participant, String participantType) {
+		this.participants.put(participant, participantType);
 		numberOfParticipants = participants.size();
 	}
 
@@ -156,5 +169,11 @@ public class ProcessedEvent {
 	public void setCenter(Position center) {
 		this.center = center;
 	}
+
+	public List<GlobalEvent> getMajorEvents() {
+		return majorEvents;
+	}
+	
+	
 
 }

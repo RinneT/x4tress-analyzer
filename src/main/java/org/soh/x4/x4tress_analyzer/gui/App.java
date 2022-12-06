@@ -2,6 +2,7 @@ package org.soh.x4.x4tress_analyzer.gui;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Iterator;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -11,6 +12,7 @@ import org.soh.x4.x4tress_analyzer.model.Component;
 import org.soh.x4.x4tress_analyzer.model.DataStorage;
 import org.soh.x4.x4tress_analyzer.model.GlobalEvent;
 import org.soh.x4.x4tress_analyzer.model.ProcessedEvent;
+import org.soh.x4.x4tress_analyzer.pocessor.EventProcessor_En;
 import org.soh.x4.x4tress_analyzer.savegame.SaveGameLoader;
 import org.xml.sax.SAXException;
 
@@ -31,6 +33,7 @@ import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
@@ -54,6 +57,7 @@ public class App extends Application {
 	private TableView<GlobalEvent> globalEventFilteredList = null;
 	private TableView<ProcessedEvent> processedEventList = null;
 	private TextField objectFilter = null;
+	private TextArea unitText;
 	private MenuBar menuBar = null;
 
 	private SaveGameLoader saveGameLoader = new SaveGameLoader();
@@ -87,6 +91,7 @@ public class App extends Application {
 
 		GridPane gridBottom = createGridPane();
 		gridBottom = createGlobalEventsList(gridBottom);
+		gridBottom = createUnitText(gridBottom);
 
 		GridPane gridRight = createGridPane();
 		gridRight = createProcessedEventsList(gridRight);
@@ -217,6 +222,20 @@ public class App extends Application {
 
 		return grid;
 	}
+	
+	/**
+	 * Create the Text Area to display the final text for a given Unit
+	 * 
+	 * @param grid the gridpane
+	 * @return The Grid Pane containing the Text Area
+	 */
+	private GridPane createUnitText(GridPane grid) {
+		unitText = new TextArea();
+
+		grid.add(unitText, 1, 0);
+
+		return grid;
+	}
 
 	/**
 	 * Create the Processed Events List without Filter
@@ -296,8 +315,17 @@ public class App extends Application {
 			objectList.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
 				if (newSelection != null) {
 					String objectCode = newSelection.getObjectCode();
+					// Set the global Events
 					filteredGlobalEvents.setPredicate(s -> s.matchesUnit(objectCode));
 					filteredProcessedEvents.setPredicate(s -> s.matchesUnit(objectCode));
+					
+					// Generate the final Unit Text
+					EventProcessor_En processor = new EventProcessor_En();
+					Iterator<ProcessedEvent> eventIterator = filteredProcessedEvents.iterator();
+					while (eventIterator.hasNext()) {
+						ProcessedEvent event = eventIterator.next();
+						unitText.setText(processor.processEvent(event, objectCode).getDisplayText());
+					}
 				}
 			});
 

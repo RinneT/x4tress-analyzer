@@ -1,11 +1,13 @@
-package org.soh.x4.x4tress_analyzer.processor;
+package org.soh.x4.x4tress_analyzer.analyzer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.soh.x4.x4tress_analyzer.model.EventName;
 import org.soh.x4.x4tress_analyzer.model.GlobalEvent;
 import org.soh.x4.x4tress_analyzer.model.Position;
 import org.soh.x4.x4tress_analyzer.model.ProcessedEvent;
@@ -60,7 +62,7 @@ public class EventAnalyzer {
 	 * 
 	 * @param globalEvents
 	 */
-	public List<ProcessedEvent> processGlobalEvents(List<GlobalEvent> globalEvents) {
+	public List<ProcessedEvent> processGlobalEvents(List<GlobalEvent> globalEvents, Map<String, Integer> eventNames) {
 
 		LOGGER.debug("Starting to process " + globalEvents.size() + " global events!");
 		List<ProcessedEvent> processedEvents = new ArrayList<>();
@@ -102,6 +104,17 @@ public class EventAnalyzer {
 			} else if (numberOfParticipants >= MIN_SIZE_BATTLE) {
 				pEvent.setEventType("battle");
 				pEvent.setScale("large");
+				// Battles also deserve their own names
+				EventName eventName = new EventName();
+				eventName.setEventName("Battle of " + pEvent.getSector());
+				Integer eventNo = eventNames.get(eventName.getEventName());
+				if (eventNo == null || eventNo == 0) {
+					eventNo = 0;
+				} else {
+					eventNo = eventNo + 1;
+				}
+				eventName.setEventNo(eventNo);
+				eventNames.put(eventName.getEventName(), eventNo);
 			}
 		}
 
@@ -128,7 +141,8 @@ public class EventAnalyzer {
 				}
 			}
 
-			// If no processed events exist, create a new one (unless the position is unknown!)
+			// If no processed events exist, create a new one (unless the position is
+			// unknown!)
 			if (!foundEvent && sectorEvent.getAttackedPos() != null) {
 				LOGGER.debug("Creating new Event in sector '" + sectorEvents.get(0).getSector() + "'!");
 				ProcessedEvent pEvent = new ProcessedEvent();
@@ -137,8 +151,11 @@ public class EventAnalyzer {
 				pEvent.setStartTime(sectorEvent.getTimestamp());
 				pEvent.setEndTime(sectorEvent.getTimestamp());
 				pEvent.setCenter(sectorEvent.getAttackedPos());
-				pEvent.addParticipant(sectorEvent.getAttackerId());
-				pEvent.addParticipant(sectorEvent.getAttackedId());
+				pEvent.addParticipant(sectorEvent.getAttackerId(), sectorEvent.getAttackerType());
+				pEvent.addParticipant(sectorEvent.getAttackedId(), sectorEvent.getAttackedType());
+				if (isEventMajor(sectorEvent)) {
+					pEvent.getMajorEvents().add(sectorEvent);
+				}
 				processedEvents.add(pEvent);
 			}
 		}
@@ -163,9 +180,12 @@ public class EventAnalyzer {
 					+ "' to processed Event starting at " + pEvent.getStartTime() + "!");
 			pEvent = ShiftEventCenter(pEvent, gEvent);
 			pEvent.setEndTime(gEvent.getTimestamp());
-			pEvent.addParticipant(gEvent.getAttackerId());
-			pEvent.addParticipant(gEvent.getAttackedId());
+			pEvent.addParticipant(gEvent.getAttackerId(), gEvent.getAttackerType());
+			pEvent.addParticipant(gEvent.getAttackedId(), gEvent.getAttackedType());
 			pEvent.setNumberOfEvents(pEvent.getNumberOfEvents() + 1);
+			if (isEventMajor(gEvent)) {
+				pEvent.getMajorEvents().add(gEvent);
+			}
 			return true;
 		}
 		return false;
@@ -237,5 +257,23 @@ public class EventAnalyzer {
 		pEvent.setCenter(center);
 
 		return pEvent;
+	}
+
+	/**
+	 * Checks if a global Event can be considered a major event<br>
+	 * E.g. if a capital ship was destroyed
+	 * @param gEvent the global event
+	 * @return true if the event is considered to be major
+	 */
+	private boolean isEventMajor(GlobalEvent gEvent) {
+		String shipType = gEvent.getAttackedType();
+		if ("SoHDestroyed".equals(gEvent.getEventType()) && "destroyer".equals(shipType)
+				|| "battleship".equals(shipType) || "carrier".equals(shipType) || "resupplier".equals(shipType)) {
+			if(gEvent.getTargetComponent() == null) {
+				return true;				
+			}
+		}
+
+		return false;
 	}
 }
