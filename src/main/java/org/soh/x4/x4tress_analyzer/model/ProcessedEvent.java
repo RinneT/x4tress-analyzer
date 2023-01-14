@@ -25,7 +25,8 @@ public class ProcessedEvent {
 	private String scale = null;
 	private String sector = null;
 	private Integer numberOfParticipants = null;
-	private Map<String, String> participants = new HashMap<>();
+	private Map<String, ShipInfo> participants = new HashMap<>();
+	private List<String> factions = new ArrayList<>();
 	private Timestamp startTime = null;
 	private Timestamp endTime = null;
 	private List<GlobalEvent> majorEvents = new ArrayList<>();
@@ -137,13 +138,35 @@ public class ProcessedEvent {
 		return numberOfParticipants;
 	}
 
-	public Map<String, String> getParticipants() {
+	public Map<String, ShipInfo> getParticipants() {
 		return participants;
 	}
 
-	public void addParticipant(String participant, String participantType) {
-		this.participants.put(participant, participantType);
-		numberOfParticipants = participants.size();
+	public void addParticipant(String participant, String participantType, String participantFaction) {
+		if (!participants.containsKey(participant)) {
+			participants.put(participant, new ShipInfo(participant, participantType, participantFaction));
+			numberOfParticipants = participants.size();			
+		}
+	}
+	
+	public void addKillForParticipant(String participant) {
+		ShipInfo shipInfo = this.participants.get(participant);
+		shipInfo.addKill();
+		this.participants.put(participant, shipInfo);
+	}
+
+	public List<String> getFactions() {
+		return factions;
+	}
+	
+	/**
+	 * Add a faction to this event if it was not yet registered
+	 * @param faction the faction name
+	 */
+	public void addFaction(String faction) {
+		if (!this.factions.contains(faction)) {
+			this.factions.add(faction);
+		}
 	}
 
 	public Timestamp getStartTime() {

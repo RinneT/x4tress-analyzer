@@ -49,7 +49,7 @@ public class SaveGameLoader {
 		inputStream.close();
 		
 		EventAnalyzer processor = new EventAnalyzer();
-		List<ProcessedEvent> processGlobalEvents = processor.processGlobalEvents(result.getGlobalEvents(), result.getEventNames());
+		List<ProcessedEvent> processGlobalEvents = processor.processGlobalEvents(result.getGlobalEvents(), result.getEventNames(), result.getEligibleForRenaming());
 		result.setProcessedEvents(processGlobalEvents);
 		return result;
 	}

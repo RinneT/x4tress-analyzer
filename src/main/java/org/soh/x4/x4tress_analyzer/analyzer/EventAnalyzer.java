@@ -11,6 +11,7 @@ import org.soh.x4.x4tress_analyzer.model.EventName;
 import org.soh.x4.x4tress_analyzer.model.GlobalEvent;
 import org.soh.x4.x4tress_analyzer.model.Position;
 import org.soh.x4.x4tress_analyzer.model.ProcessedEvent;
+import org.soh.x4.x4tress_analyzer.model.ShipInfo;
 
 /**
  * The Event Analyzer.<br>
@@ -40,7 +41,7 @@ public class EventAnalyzer {
 	/**
 	 * The maximum range in meters for two Global Events to be combined
 	 */
-	private static final double EVENT_MAX_RANGE = 30000.0; // 30km
+	private static final double EVENT_MAX_RANGE = 100000.0; // 100km
 
 	/**
 	 * Event size to be classified as a battle
@@ -62,7 +63,7 @@ public class EventAnalyzer {
 	 * 
 	 * @param globalEvents
 	 */
-	public List<ProcessedEvent> processGlobalEvents(List<GlobalEvent> globalEvents, Map<String, Integer> eventNames) {
+	public List<ProcessedEvent> processGlobalEvents(List<GlobalEvent> globalEvents, Map<String, Integer> eventNames, Map<String, List<String>> eligibleForRenaming) {
 
 		LOGGER.debug("Starting to process " + globalEvents.size() + " global events!");
 		List<ProcessedEvent> processedEvents = new ArrayList<>();
@@ -116,6 +117,8 @@ public class EventAnalyzer {
 				eventName.setEventNo(eventNo);
 				eventNames.put(eventName.getEventName(), eventNo);
 			}
+			
+			checkRenamingPossibility(pEvent, eligibleForRenaming);
 		}
 
 		return processedEvents;
@@ -151,8 +154,13 @@ public class EventAnalyzer {
 				pEvent.setStartTime(sectorEvent.getTimestamp());
 				pEvent.setEndTime(sectorEvent.getTimestamp());
 				pEvent.setCenter(sectorEvent.getAttackedPos());
-				pEvent.addParticipant(sectorEvent.getAttackerId(), sectorEvent.getAttackerType());
-				pEvent.addParticipant(sectorEvent.getAttackedId(), sectorEvent.getAttackedType());
+				pEvent.addParticipant(sectorEvent.getAttackerId(), sectorEvent.getAttackerType(), sectorEvent.getAttackerFaction());
+				pEvent.addParticipant(sectorEvent.getAttackedId(), sectorEvent.getAttackedType(), sectorEvent.getAttackedFaction());
+				if ("SoHDestroyed".equals(sectorEvent.getEventType())) {
+					pEvent.addKillForParticipant(sectorEvent.getAttackerId());
+				}
+				pEvent.addFaction(sectorEvent.getAttackerFaction());
+				pEvent.addFaction(sectorEvent.getAttackedFaction());
 				if (isEventMajor(sectorEvent)) {
 					pEvent.getMajorEvents().add(sectorEvent);
 				}
@@ -180,8 +188,13 @@ public class EventAnalyzer {
 					+ "' to processed Event starting at " + pEvent.getStartTime() + "!");
 			pEvent = ShiftEventCenter(pEvent, gEvent);
 			pEvent.setEndTime(gEvent.getTimestamp());
-			pEvent.addParticipant(gEvent.getAttackerId(), gEvent.getAttackerType());
-			pEvent.addParticipant(gEvent.getAttackedId(), gEvent.getAttackedType());
+			pEvent.addParticipant(gEvent.getAttackerId(), gEvent.getAttackerType(), gEvent.getAttackerFaction());
+			pEvent.addParticipant(gEvent.getAttackedId(), gEvent.getAttackedType(), gEvent.getAttackedFaction());
+			if ("SoHDestroyed".equals(gEvent.getEventType())) {
+				pEvent.addKillForParticipant(gEvent.getAttackerId());
+			}
+			pEvent.addFaction(gEvent.getAttackerFaction());
+			pEvent.addFaction(gEvent.getAttackedFaction());
 			pEvent.setNumberOfEvents(pEvent.getNumberOfEvents() + 1);
 			if (isEventMajor(gEvent)) {
 				pEvent.getMajorEvents().add(gEvent);
@@ -275,5 +288,31 @@ public class EventAnalyzer {
 		}
 
 		return false;
+	}
+	
+	/**
+	 * Check if there are any ships in an event that are eligible for renaming
+	 * @param pEvent
+	 */
+	private void checkRenamingPossibility(ProcessedEvent pEvent, Map<String, List<String>> eligibleForRenaming) {
+		for (ShipInfo participant : pEvent.getParticipants().values()) {
+			
+			List<String> nameList = eligibleForRenaming.get(participant.getShipId());
+			if (nameList == null) {
+				nameList = new ArrayList<>();
+			}
+			
+			int noOfKills = participant.getNoOfKills();
+			if (noOfKills > 30) {
+				nameList.add("Slayer of " + pEvent.getSector());
+			} else if (noOfKills > 20) {
+				nameList.add("Hero of " + pEvent.getSector());
+			} else if (noOfKills > 10) {
+				nameList.add("Defender of " + pEvent.getSector());
+			}
+			if (nameList.size() > 0) {
+				eligibleForRenaming.put(participant.getShipId(), nameList);
+			}
+		}
 	}
 }
