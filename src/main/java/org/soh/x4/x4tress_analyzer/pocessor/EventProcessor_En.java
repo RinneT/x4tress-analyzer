@@ -44,13 +44,13 @@ public class EventProcessor_En {
 			if (eventType != null && unitCode != null) {
 				switch (eventType) {
 				case "battle":
-					text = createBattleText(pEvent, unitCode, eventType);
+					text = createBattleText(pEvent, unitCode);
 
 				case "fight":
-					text = createBattleText(pEvent, unitCode, eventType);
+					text = createBattleText(pEvent, unitCode);
 
 				case "skirmish":
-					text = createBattleText(pEvent, unitCode, eventType);
+					text = createBattleText(pEvent, unitCode);
 				}
 			}
 
@@ -71,10 +71,10 @@ public class EventProcessor_En {
 	 * @param unitCode
 	 * @return the battle text
 	 */
-	private String createBattleText(ProcessedEvent pEvent, String unitCode, String eventType) {
+	private String createBattleText(ProcessedEvent pEvent, String unitCode) {
 		String text = unitCode + " took part in ";
 		if (pEvent.getEventName() == null) {
-			text = text + "a " + pEvent.getScale() + " " + eventType + " in " + pEvent.getSector() + " between "
+			text = text + "a " + pEvent.getScale() + " " + pEvent.getEventType() + " in " + pEvent.getSector() + " between "
 					+ listToFlatText(pEvent.getFactions()) + ".\n";
 
 			// " with " + pEvent.getNumberOfParticipants() + " participants.\n";
