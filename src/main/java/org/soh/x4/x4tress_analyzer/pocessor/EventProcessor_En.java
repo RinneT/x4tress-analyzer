@@ -23,6 +23,12 @@ import org.soh.x4.x4tress_analyzer.model.ShipInfo;
  *
  */
 public class EventProcessor_En {
+	
+	private final String playerName;
+	
+	public EventProcessor_En(String playerName) {
+		this.playerName = playerName;
+	}
 
 	/**
 	 * Generate text for a given Event for a given Unit
@@ -38,13 +44,13 @@ public class EventProcessor_En {
 			if (eventType != null && unitCode != null) {
 				switch (eventType) {
 				case "battle":
-					text = createBattleText(pEvent, unitCode, eventType);
+					text = createBattleText(pEvent, unitCode, eventType, playerName);
 
 				case "fight":
-					text = createBattleText(pEvent, unitCode, eventType);
+					text = createBattleText(pEvent, unitCode, eventType, playerName);
 
 				case "skirmish":
-					text = createBattleText(pEvent, unitCode, eventType);
+					text = createBattleText(pEvent, unitCode, eventType, playerName);
 				}
 			}
 
@@ -65,7 +71,7 @@ public class EventProcessor_En {
 	 * @param unitCode
 	 * @return the battle text
 	 */
-	private String createBattleText(ProcessedEvent pEvent, String unitCode, String eventType) {
+	private String createBattleText(ProcessedEvent pEvent, String unitCode, String eventType, String playerName) {
 		String text = unitCode + " took part in ";
 		if (pEvent.getEventName() == null) {
 			text = text + "a " + pEvent.getScale() + " " + eventType + " in " + pEvent.getSector() + " between "
@@ -134,15 +140,22 @@ public class EventProcessor_En {
 		
 		for (Entry<String, Integer> stat : shipsPerFaction.entrySet()) {
 			if (stat.getValue() == 1) {
-				resultText = resultText + stat.getValue() + " was fielded by the " + stat.getKey() + ",\n";
+				resultText = resultText + stat.getValue() + " was fielded by " + writeFactionName(stat.getKey()) + ",\n";
 			} else {
-				resultText = resultText + stat.getValue() + " were fielded by the " + stat.getKey() + ",\n"; 				
+				resultText = resultText + stat.getValue() + " were fielded by " + writeFactionName(stat.getKey()) + ",\n"; 				
 			}
 		}
 		
 		resultText = resultText.substring(0, resultText.length() - 2) + ".\n";
 		
 		return resultText;
+	}
+	
+	private String writeFactionName(String faction) {
+		if (playerName.equals(faction)) {
+			return faction;
+		}
+		return "the " + faction;
 	}
 
 	/**
@@ -155,10 +168,10 @@ public class EventProcessor_En {
 		String text = "";
 		if (stringList != null) {
 			for (int i = 0; i < stringList.size() - 1; i++) {
-				text = text + "the " + stringList.get(i) + ", ";
+				text = text + writeFactionName(stringList.get(i)) + ", ";
 			}
 
-			text = text + " and the " + stringList.get(stringList.size() - 1);
+			text = text + "and " + writeFactionName(stringList.get(stringList.size() - 1));
 		}
 		return text;
 	}

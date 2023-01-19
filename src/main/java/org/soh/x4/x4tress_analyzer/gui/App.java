@@ -320,7 +320,7 @@ public class App extends Application {
 					filteredProcessedEvents.setPredicate(s -> s.matchesUnit(objectCode));
 					
 					// Generate the final Unit Text
-					EventProcessor_En processor = new EventProcessor_En();
+					EventProcessor_En processor = new EventProcessor_En(saveGameData.getPlayerName());
 					Iterator<ProcessedEvent> eventIterator = filteredProcessedEvents.iterator();
 					while (eventIterator.hasNext()) {
 						ProcessedEvent event = eventIterator.next();

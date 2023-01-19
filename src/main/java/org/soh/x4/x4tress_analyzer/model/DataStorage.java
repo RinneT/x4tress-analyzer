@@ -12,10 +12,13 @@ import java.util.Map;
  */
 public class DataStorage {
 
-	public DataStorage(List<Component> objectList, List<GlobalEvent> globalEvents) {
+	public DataStorage(String playerName, List<Component> objectList, List<GlobalEvent> globalEvents) {
+		this.playerName = playerName;
 		this.objectList = objectList;
 		this.globalEvents = globalEvents;
 	}
+
+	private final String playerName;
 
 	private final List<Component> objectList;
 
@@ -28,6 +31,15 @@ public class DataStorage {
 	private final Map<String, List<String>> eligibleForRenaming = new HashMap<>();
 
 	private List<DisplayEvent> displayEvents;
+
+	/**
+	 * Get the player name
+	 * 
+	 * @return the in game player name
+	 */
+	public String getPlayerName() {
+		return playerName;
+	}
 
 	/**
 	 * Get the list of loaded Objects (Ships / Stations)

@@ -70,6 +70,11 @@ public class Savegame {
 	private List<Integer> idxAttackedPos = new ArrayList<>();
 
 	private List<Component> objectList = new ArrayList<>();
+	
+	/**
+	 * The in game player name
+	 */
+	private String playerName = "";
 
 	/**
 	 * The table key map contains the mapping of table keys as Integer with their
@@ -137,6 +142,14 @@ public class Savegame {
 	}
 
 	private int globalEventsListId;
+
+	public String getPlayerName() {
+		return playerName;
+	}
+
+	public void setPlayerName(String playerName) {
+		this.playerName = playerName;
+	}
 
 	public List<Component> getObjectList() {
 		return objectList;

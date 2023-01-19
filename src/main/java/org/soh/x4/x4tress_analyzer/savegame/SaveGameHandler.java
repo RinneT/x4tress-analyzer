@@ -26,6 +26,8 @@ public class SaveGameHandler extends DefaultHandler {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(SaveGameHandler.class);
 
+	private static final String TAG_PLAYER = "player";
+	
 	private static final String TAG_COMPONENT = "component";
 
 	private static final String TAG_VALUE = "value";
@@ -85,6 +87,8 @@ public class SaveGameHandler extends DefaultHandler {
 	@Override
 	public void startElement(String uri, String lName, String qName, Attributes attr) throws SAXException {
 		switch (qName) {
+		case TAG_PLAYER:
+			savegame.setPlayerName(attr.getValue("name"));
 		case TAG_COMPONENT:
 			componentsChecked++;
 			savegame.addComponentIfValid(attr);
@@ -170,7 +174,7 @@ public class SaveGameHandler extends DefaultHandler {
 
 			LOGGER.info("Loaded " + globalEvents.size() + " global Events.");
 
-			ds = new DataStorage(savegame.getObjectList(), globalEvents);
+			ds = new DataStorage(savegame.getPlayerName(), savegame.getObjectList(), globalEvents);
 
 		} else {
 			LOGGER.warn("Tried loading the components list before a file was parsed!");
