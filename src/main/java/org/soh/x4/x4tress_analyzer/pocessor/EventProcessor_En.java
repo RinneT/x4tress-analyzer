@@ -75,7 +75,7 @@ public class EventProcessor_En {
 		String text = unitCode + " took part in ";
 		if (pEvent.getEventName() == null) {
 			text = text + "a " + pEvent.getScale() + " " + pEvent.getEventType() + " in " + pEvent.getSector() + " between "
-					+ listToFlatText(pEvent.getFactions()) + ".\n";
+					+ factionsToList(pEvent.getFactions()) + ".\n";
 
 			// " with " + pEvent.getNumberOfParticipants() + " participants.\n";
 		} else {
@@ -159,12 +159,12 @@ public class EventProcessor_En {
 	}
 
 	/**
-	 * Create a text list
+	 * Create a faction list
 	 * 
 	 * @param stringList
 	 * @return
 	 */
-	private String listToFlatText(List<String> stringList) {
+	private String factionsToList(List<String> stringList) {
 		String text = "";
 		if (stringList != null) {
 			for (int i = 0; i < stringList.size() - 1; i++) {
